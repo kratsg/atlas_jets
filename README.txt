@@ -1,0 +1,1 @@
+Some readme for Shitdos.
