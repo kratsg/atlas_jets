@@ -10,7 +10,7 @@ config = {
     'download_url': 'Where to download it.',
     'author_email': 'kratsg@cern.ch',
     'version': '0.1',
-    'install_requires': ['nose','root_numpy'],
+    'install_requires': ['nose','numpy','scipy','matplotlib','root_numpy'],
     'packages': ['atlas_jets'],
     'scripts': [],
     'name': 'atlas_jets',

@@ -37,27 +37,27 @@ def erf(x):
     y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*np.exp(-x*x)
     return sign*y # erf(-x) = -erf(x)
 
-def circularRegion(pixel_jetcoord, pixel_radius, pixel_coord):
-  '''determines if `pixel_coord` is within `pixel_radius` of `pixel_jetcoord`'''
-  diff = pixel_jetcoord - pixel_coord
+def circularRegion(cell_jetcoord, cell_radius, cell_coord):
+  '''determines if `cell_coord` is within `cell_radius` of `cell_jetcoord`'''
+  diff = cell_jetcoord - cell_coord
   distance = np.sqrt(diff[0]**2. + diff[1]**2.)
-  if distance <= pixel_radius:
+  if distance <= cell_radius:
     return True
   else:
     return False
 
 # all coordinates are in (phi, eta) pairs always
-#     and are converted to (pixel_x, pixel_y) at runtime
+#     and are converted to (cell_x, cell_y) at runtime
 class Grid:
   def __init__(self,\
                domain                = np.array([[-3.2,3.2],[0.0,3.2]]),\
-               pixel_resolution      = 0.20,\
+               cell_resolution      = 0.20,\
                recon_algo            = 'gaussian'):
     '''Generates a grid of zeros based on size of domain and resolution'''
     """
         - domain: [ (phi_min, phi_max) , (eta_min, eta_max) ]
         - resolution
-          - pixel: how big a single pixel is in eta-phi
+          - cell: how big a single cell is in eta-phi
         - recon_algo: which jet reconstruction algorithm to use
           - uniform  (implemented)
           - gaussian (implemented)
@@ -65,85 +65,81 @@ class Grid:
           - j3       (not implemented)
     """
     self.domain                = np.array(domain).astype(float)
-    self.pixel_resolution      = np.float(pixel_resolution)
-    self.grid = np.zeros(self.phieta2pixel(self.domain[:,1])).astype(float)
+    self.cell_resolution      = np.float(cell_resolution)
+    self.grid = np.zeros(self.phieta2cell(self.domain[:,1])).astype(float)
     valid_algorithms = ['uniform', 'gaussian', 'dipole', 'j3']
     if recon_algo not in valid_algorithms:
       raise ValueError('%s is not a valid algorithm. Choose from %s' % (recon_algo, valid_algorithms))
     self.recon_algo = recon_algo
 
-  def phieta2pixel(self, phieta_coord):
-    '''Converts (phi,eta) -> (pixel_x, pixel_y)'''
-    pixel_coord = (phieta_coord - self.domain[:,0])/self.pixel_resolution
-    return np.round(pixel_coord).astype(int)
+  def phieta2cell(self, phieta_coord):
+    '''Converts (phi,eta) -> (cell_x, cell_y)'''
+    cell_coord = (phieta_coord - self.domain[:,0])/self.cell_resolution
+    return np.round(cell_coord).astype(int)
 
-  def pixel2phieta(self, pixel_coord):
-    '''Converts (pixel_x, pixel_y) -> rounded(phi, eta)'''
-    return self.pixel_resolution * pixel_coord + self.domain[:,0]
+  def cell2phieta(self, cell_coord):
+    '''Converts (cell_x, cell_y) -> rounded(phi, eta)'''
+    return self.cell_resolution * cell_coord + self.domain[:,0]
 
-  def boundary_conditions(self, pixel_coord):
-    '''Checks if pixel_coord is outside of Grid'''
+  def boundary_conditions(self, cell_coord):
+    '''Checks if cell_coord is outside of Grid'''
     # at the moment, this boundary condition defined for eta
     #   because phi is periodic
-    if 0 <= pixel_coord[1] < self.grid.shape[1]:
+    if 0 <= cell_coord[1] < self.grid.shape[1]:
       return True
     else:
       return False
 
   def add_event(self, event):
-    if not isinstance(event, Event):
-      raise TypeError("You must use an Event object! You gave a %s object" % event.__class__.__name__)
     for jet in event:
       self.add_jet(jet)
 
   def add_jet(self, jet):
-    if not isinstance(jet, Jet):
-      raise TypeError("You must use a Jet object! You gave us a %s object" % jet.__class__.__name__)
     '''add a single `jet` to the current grid'''
-    for pixel_coord, fractional_energy in self.__generate_mesh(jet):
+    for cell_coord, fractional_energy in self.__generate_mesh(jet):
       try:
-        if pixel_coord[0] >= self.grid.shape[0]:
-          pixel_coord = (pixel_coord[0] - self.grid.shape[0], pixel_coord[1])
-        self.grid[pixel_coord] += fractional_energy
+        if cell_coord[0] >= self.grid.shape[0]:
+          cell_coord = (cell_coord[0] - self.grid.shape[0], cell_coord[1])
+        self.grid[cell_coord] += fractional_energy
         jet.trigger_energy += fractional_energy
       except IndexError:
         # we should NEVER see this gorram error
         # -- the reason is that we filter out all inappropriate eta coordinates
         #        and then wrap around in the phi coordinates
         print "\t"*2, jet
-        print "\t"*2, '-- jet pixel_coord could not be added:', pixel_coord
+        print "\t"*2, '-- jet cell_coord could not be added:', cell_coord
 
-  def __jetdPt(self, pixel_jetcoord, pixel_radius, jet_energy, pixel_coord):
-    '''return the fractional energy at `pixel_coord` of a `jet_energy` GeV jet centered at `pixel_jetcoord` of radius `pixel_radius`'''
+  def __jetdPt(self, cell_jetcoord, cell_radius, jet_energy, cell_coord):
+    '''return the fractional energy at `cell_coord` of a `jet_energy` GeV jet centered at `cell_jetcoord` of radius `cell_radius`'''
     if self.recon_algo == 'uniform':
       # uniform energy is calculated in self.__generate_mesh due to efficiency concerns
       raise Exception('should not be calling this function when self.recon_algo == \'uniform\'')
       return false
     elif self.recon_algo == 'gaussian':
-      return self.__gaussian2D(pixel_jetcoord, pixel_radius, jet_energy, pixel_coord)
+      return self.__gaussian2D(cell_jetcoord, cell_radius, jet_energy, cell_coord)
 
-  def __gaussian2D(self, pixel_mu, pixel_radius, amplitude, pixel_coord):
+  def __gaussian2D(self, cell_mu, cell_radius, amplitude, cell_coord):
     '''return the 2D gaussian(mu, sigma) evaluated at coord'''
     # normalization factor, 500 GeV outputs 476.275
     # default is 2 * pi * sx * sy * amplitude
-    normalization = 2. * np.pi * pixel_radius**2. * erf( 0.92 * (2.**-0.5) )**2.
-    exponential = np.exp(-( (pixel_mu[0] - pixel_coord[0])**2./(2. * (pixel_radius**2.)) + (pixel_mu[1] - pixel_coord[1])**2./(2.*(pixel_radius**2.)) ))
+    normalization = 2. * np.pi * cell_radius**2. * erf( 0.92 * (2.**-0.5) )**2.
+    exponential = np.exp(-( (cell_mu[0] - cell_coord[0])**2./(2. * (cell_radius**2.)) + (cell_mu[1] - cell_coord[1])**2./(2.*(cell_radius**2.)) ))
     return amplitude*exponential/normalization
 
   def __generate_mesh(self, jet):
-    '''return the 2D mesh generator of `pixel_coords` for a `jet` to add to grid'''
-    # convert to pixel coordinates and deal with grid
-    pixel_jetcoord = self.phieta2pixel(jet.coord)
-    pixel_radius = jet.radius/self.pixel_resolution
+    '''return the 2D mesh generator of `cell_coords` for a `jet` to add to grid'''
+    # convert to cell coordinates and deal with grid
+    cell_jetcoord = self.phieta2cell(jet.coord)
+    cell_radius = jet.radius/self.cell_resolution
     # what we define as the jet energy for `self.__jetdPt`
     jet_energy = jet.pT
     # always start with a square mesh
-    square_mesh_coords = self.__square_mesh(pixel_jetcoord, pixel_radius)
+    square_mesh_coords = self.__square_mesh(cell_jetcoord, cell_radius)
     if self.recon_algo == 'uniform':
       uniform_jetdPt = jet_energy/(square_mesh_coords.size/2.)
-      mesh = ([tuple(pixel_coord), uniform_jetdPt] for pixel_coord in square_mesh_coords if self.boundary_conditions(pixel_coord) )
+      mesh = ([tuple(cell_coord), uniform_jetdPt] for cell_coord in square_mesh_coords if self.boundary_conditions(cell_coord) )
     elif self.recon_algo == 'gaussian':
-      mesh = ([tuple(pixel_coord), self.__jetdPt(pixel_jetcoord, pixel_radius, jet_energy, pixel_coord)] for pixel_coord in square_mesh_coords if self.boundary_conditions(pixel_coord)&circularRegion(pixel_jetcoord, pixel_radius, pixel_coord) )
+      mesh = ([tuple(cell_coord), self.__jetdPt(cell_jetcoord, cell_radius, jet_energy, cell_coord)] for cell_coord in square_mesh_coords if self.boundary_conditions(cell_coord)&circularRegion(cell_jetcoord, cell_radius, cell_coord) )
     return mesh
 
   def __square_mesh(self, center, radius):
@@ -163,9 +159,9 @@ class Grid:
     pl.xlabel('$\phi$')
     pl.ylabel('$\eta$')
     pl.title(title)
-    # transform labels from pixel coords to phi-eta coords
-    xticks_label = xticks_loc * self.pixel_resolution + self.domain[0,0]
-    yticks_label = yticks_loc * self.pixel_resolution + self.domain[1,0]
+    # transform labels from cell coords to phi-eta coords
+    xticks_label = xticks_loc * self.cell_resolution + self.domain[0,0]
+    yticks_label = yticks_loc * self.cell_resolution + self.domain[1,0]
     pl.xticks(xticks_loc, xticks_label)
     pl.yticks(yticks_loc, yticks_label)
     # set the colorbar
@@ -184,7 +180,7 @@ class Grid:
     fig.savefig(filename)
 
   def __str__(self):
-    return "Grid object:\n\tPhi: %s\n\tEta: %s\n\tResolution: %0.2f" % (self.domain[0], self.domain[1], self.pixel_resolution)
+    return "Grid object:\n\tPhi: %s\n\tEta: %s\n\tResolution: %0.2f" % (self.domain[0], self.domain[1], self.cell_resolution)
     
 class Jet:
   def __init__(self,\
