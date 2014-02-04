@@ -7,10 +7,9 @@ class Analysis:
     self.offline_events = offline_events
     self.tower_events = tower_events
 
-  def Efficiency(self, num_bins = 50):
-    print "Needs to be worked on"
-    return False
-    input_jets = np.array([jet.pT for event in self.offline_events for jet in event[:2]])
+  def Efficiency(self, offline_pT_threshold = 150., gTower_threshold = 300.):
+    # to be worked on
+    input_jets = np.array([jet.pT for event in self.offline_events for jet in event[:2] if jet.pT > offline_pT_threshold])
     trigger_jets = np.array([jet.pT for event in self.offline_events for jet in event[:2] if jet.triggered()])
 
     bin_range = (input_jets.min(), input_jets.max())
@@ -55,9 +54,10 @@ class Analysis:
     # plot it all
     pl.figure()
     pl.xlabel('$E_T^{\mathrm{threshold}}$ [GeV]')
-    pl.ylabel('Number of gTowers')
-    pl.title('Number of gTowers above $E_T^{\mathrm{threshold}}$ for $p_T^{\mathrm{jet}}$ > %d GeV' % pT_thresh)
+    pl.ylabel('Number of gTowers per event')
+    pl.title('Number of gTowers above $E_T^{\mathrm{threshold}}$ for offline $p_T^{\mathrm{jet}}$ > %d GeV, %d events' % (pT_thresh, num_events))
     pl.bar(bin_edges[:-1], cumul_sum, width=width, log=True)
+    pl.ylim((10.**-3.,10.**4.))
     #pl.xscale('log')
     #pl.yscale - need to use log=True argument in pyplot.bar (see documentation)
     pl.savefig('events_threshold_histogram_multiplicity%d.png' % pT_thresh)
@@ -90,10 +90,11 @@ class Analysis:
     cumul_sum = 1.0*cumul_sum/num_events
     # plot it all
     pl.figure()
-    pl.xlabel('$E_T^{\mathrm{threshold}}$ [GeV]')
-    pl.ylabel('Number of gTowers')
-    pl.title('Histogram of gTowers for $p_T^{\mathrm{jet}}$ > %d GeV' % pT_thresh)
+    pl.xlabel('$E_T^{\mathrm{jet}}$ [GeV]')
+    pl.ylabel('Number of gTowers per event')
+    pl.title('Histogram of gTowers for offline $p_T^{\mathrm{jet}}$ > %d GeV, %d events' % (pT_thresh, num_events))
     pl.bar(bin_edges[:-1], cumul_sum, width=width, log=True)
+    pl.ylim((10.**-3.,10.**4.))
     #pl.xscale('log')
     #pl.yscale - need to use log=True argument in pyplot.bar (see documentation)
     pl.savefig('events_threshold_histogram_towers%d.png' % pT_thresh)

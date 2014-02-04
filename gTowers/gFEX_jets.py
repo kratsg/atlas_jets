@@ -339,6 +339,8 @@ class TowerEvent:
                                phiMin=gTowerPhiMin,\
                                phiMax=gTowerPhiMax))
 
+    self.towers.sort(key=lambda tower: tower.pT, reverse=True)
+
     self.E = [tower.E for tower in self.towers]
     self.phiMin = np.min([tower.phiMin for tower in self.towers])
     self.etaMin = np.min([tower.etaMin for tower in self.towers])
