@@ -233,7 +233,7 @@ class SeedFilter:
     self.numSeeds = int(numSeeds)
 
   def filter(self, seeds):
-    return [seed for seed in seeds if seed.E > self.ETthresh][:self.numSeeds]
+    return [seed for seed in seeds if seed.E/np.cosh(seed.eta) > self.ETthresh][:self.numSeeds]
 
   def __call__(self, seeds):
     return self.filter(seeds)
@@ -373,7 +373,8 @@ class TowerEvent:
       normalization = 2. * np.pi * radius**2. * erf( 0.92 * (2.**-0.5) )**2.
       exponential = np.exp(-( (seed.phi - tower.phi)**2./(2. * (radius**2.)) + (seed.eta - tower.eta)**2./(2.*(radius**2.)) ))
       towerTLorentzVector = TLorentzVector()
-      towerTLorentzVector.SetPtEtaPhiM(tower.E/np.cosh(tower.eta) * normalization/exponential, tower.eta, tower.phi, 0.0)
+      towerTLorentzVector.SetPtEtaPhiM(tower.E/np.cosh(tower.eta), tower.eta, tower.phi, 0.0)
+      #towerTLorentzVector.SetPtEtaPhiM(tower.E/np.cosh(tower.eta) * exponential/normalization, tower.eta, tower.phi, 0.0)
       l += towerTLorentzVector
     return Jet(eta=seed.eta, phi=seed.phi, TLorentzVector = l)
 
