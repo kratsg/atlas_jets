@@ -241,6 +241,33 @@ class SeedFilter:
   def __str__(self):
     return "SeedFilter object returning at most %d seeds > %0.4f GeV" % (self.numSeeds, self.ETthresh)
 
+class Tower:
+  def __init__(self,\
+               E,\
+               num_cells,\
+               etaMin,\
+               etaMax,\
+               phiMin,\
+               phiMax):
+    self.E = E
+    self.num_cells = num_cells
+    self.etaMin = etaMin
+    self.etaMax = etaMax
+    self.phiMin = phiMin
+    self.phiMax = phiMax
+    # set the center of the tower to the geometric center
+    self.eta = (self.etaMax + self.etaMin)/2.0
+    self.phi = (self.phiMax + self.phiMin)/2.0
+    # calculate pT
+    self.pT = self.E/np.cosh(self.eta)
+    # generate a TLorentzVector to handle additions
+    #   note: m = 0 for towers, so E = p --> ET = pT
+    self.TLorentzVector = TLorentzVector()
+    self.TLorentzVector.SetPtEtaPhiM(self.pT, self.eta, self.phi, 0.0)
+
+  def __str__(self):
+    return "Tower object:\n\tE: %0.4f (GeV)\n\tnum_cells: %d\n\tphi: (%0.4f,%0.4f) \td = %0.4f\n\teta: (%0.4f, %0.4f) \td = %0.4f" % (self.E, self.num_cells, self.phiMin, self.phiMax, self.phiMax - self.phiMin, self.etaMin, self.etaMax, self.etaMax - self.etaMin)
+
 class Jet:
   def __init__(self,\
                inputThresh    = 200.,\
@@ -250,7 +277,8 @@ class Jet:
                TLorentzVector = TLorentzVector(),\
                radius         = 1.0,\
                input_energy   = 0.0,\
-               trigger_energy = 0.0):
+               trigger_energy = 0.0,
+               seed           = Tower(0.,0.,0.,0.,0.,0.)):
     '''Defines a jet'''
     """
       thresholds
@@ -376,10 +404,10 @@ class TowerEvent:
       towerTLorentzVector.SetPtEtaPhiM(tower.E/np.cosh(tower.eta), tower.eta, tower.phi, 0.0)
       #towerTLorentzVector.SetPtEtaPhiM(tower.E/np.cosh(tower.eta) * exponential/normalization, tower.eta, tower.phi, 0.0)
       l += towerTLorentzVector
-    return Jet(eta=seed.eta, phi=seed.phi, TLorentzVector = l)
+    return Jet(eta=seed.eta, phi=seed.phi, TLorentzVector = l, seed=seed)
 
   def __towers_around(self, seed, radius=1.0):
-    return [tower for tower in self.towers if np.sqrt((tower.phi - seed.phi)**2. + (tower.eta - seed.eta)**2.) <= radius]
+    return [tower for tower in self.towers if np.sqrt((tower.phi - seed.phi)**2. + (tower.eta - seed.eta)**2.) <= radius and tower != seed]
 
   def __iter__(self):
     # initialize to start of list
@@ -398,34 +426,6 @@ class TowerEvent:
 
   def __str__(self):
     return "TowerEvent object with %d Tower objects\n\tphi: (%0.4f, %0.4f)\n\teta: (%0.4f, %0.4f)" % (len(self.towers), self.phiMin, self.phiMax, self.etaMin, self.etaMax)
-
-# to do -- fill this shit in
-class Tower:
-  def __init__(self,\
-               E,\
-               num_cells,\
-               etaMin,\
-               etaMax,\
-               phiMin,\
-               phiMax):
-    self.E = E
-    self.num_cells = num_cells
-    self.etaMin = etaMin
-    self.etaMax = etaMax
-    self.phiMin = phiMin
-    self.phiMax = phiMax
-    # set the center of the tower to the geometric center
-    self.eta = (self.etaMax + self.etaMin)/2.0
-    self.phi = (self.phiMax + self.phiMin)/2.0
-    # calculate pT
-    self.pT = self.E/np.cosh(self.eta)
-    # generate a TLorentzVector to handle additions
-    #   note: m = 0 for towers, so E = p --> ET = pT
-    self.TLorentzVector = TLorentzVector()
-    self.TLorentzVector.SetPtEtaPhiM(self.pT, self.eta, self.phi, 0.0)
-
-  def __str__(self):
-    return "Tower object:\n\tE: %0.4f (GeV)\n\tnum_cells: %d\n\tphi: (%0.4f,%0.4f) \td = %0.4f\n\teta: (%0.4f, %0.4f) \td = %0.4f" % (self.E, self.num_cells, self.phiMin, self.phiMax, self.phiMax - self.phiMin, self.etaMin, self.etaMax, self.etaMax - self.etaMin)
 
 class Events:
   def __init__(self, events = []):

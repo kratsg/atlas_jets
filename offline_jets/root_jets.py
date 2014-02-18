@@ -223,6 +223,7 @@ class Jet:
     self.radius         = np.float(radius)
     self.input_energy   = np.float(pT)
     self.trigger_energy = np.float(trigger_energy)
+    self.rapidity       = np.log( ((self.m**2. + self.pT**2. * np.cosh(self.eta)**2.)**0.5 + self.pT * np.sinh(self.eta) )/(self.m**2. + self.pT**2.)**0.5)
 
   def __str__(self):
     return "Jet object:\n\tPhi: %0.4f\n\tEta: %0.4f\n\tE: %0.2f (GeV)\n\tpT: %0.2f (GeV)\n\tm: %0.2f (GeV)\n\tInputted: %s\n\tTriggered: %s" % (self.phi, self.eta, self.E, self.pT, self.m, self.inputted(), self.triggered())
