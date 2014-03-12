@@ -2,6 +2,7 @@
 
 #ROOT is needed to deal with rootfiles
 import ROOT
+from ROOT import TLorentzVector
 
 #root_numpy is needed to read the rootfile
 import root_numpy as rnp
@@ -132,7 +133,7 @@ class Grid:
     cell_jetcoord = self.phieta2cell(jet.coord)
     cell_radius = jet.radius/self.cell_resolution
     # what we define as the jet energy for `self.__jetdPt`
-    jet_energy = jet.pT
+    jet_energy = jet.Pt
     # always start with a square mesh
     square_mesh_coords = self.__square_mesh(cell_jetcoord, cell_radius)
     if self.recon_algo == 'uniform':
@@ -166,7 +167,7 @@ class Grid:
     pl.yticks(yticks_loc, yticks_label)
     # set the colorbar
     cbar = pl.colorbar(pad=0.2)
-    cbar.set_label('pT (GeV)')
+    cbar.set_label('Pt (GeV)')
     return fig
 
   def show(self, title='Grid Plot'):
@@ -184,21 +185,17 @@ class Grid:
     
 class Jet:
   def __init__(self,\
-               inputThresh    = 200.,\
-               triggerThresh  = 150.,\
                E              = 0.0,\
-               pT             = 0.0,\
+               Pt             = 0.0,\
                m              = 0.0,\
                eta            = 0.0,\
                phi            = 0.0,\
                radius         = 1.0,\
-               input_energy   = 0.0,\
-               trigger_energy = 0.0):
+               nsj            = 0,\
+               tau            = [],\
+               split          = []):
     '''Defines a jet'''
     """
-      thresholds
-        - input          : in GeV, jet energy for input
-        - trigger        : in GeV, jet energy for trigger
       energy             : jet energy, E
       momentum_transverse: magnitude of momentum transverse
                                  to beam, mag(p)*sin(theta)
@@ -209,33 +206,37 @@ class Jet:
         -- theta is angle between particle momentum and the beam axis
         -- see more: http://en.wikipedia.org/wiki/Pseudorapidity
       radius             : radius of jet (eta-phi coordinates)
-      input_energy       : the input energy of the jet
-      trigger_energy     : amount of energy actually recorded on the grid
     """
-    self.inputThresh    = np.float(inputThresh)
-    self.triggerThresh  = np.float(triggerThresh)
     self.E              = np.float(E)
-    self.pT             = np.float(pT)
+    self.Pt             = np.float(Pt)
     self.m              = np.float(m)
     self.phi            = np.float(phi)
     self.eta            = np.float(eta)
     self.coord          = (self.phi, self.eta)
     self.radius         = np.float(radius)
-    self.input_energy   = np.float(pT)
-    self.trigger_energy = np.float(trigger_energy)
-    self.rapidity       = np.log( ((self.m**2. + self.pT**2. * np.cosh(self.eta)**2.)**0.5 + self.pT * np.sinh(self.eta) )/(self.m**2. + self.pT**2.)**0.5)
+    self.nsj            = np.int(nsj)
+    self.tau            = np.array(tau)
+    self.split          = np.array(split)
+
+  def vector(self, Pt = None, eta = None, phi = None, m = None):
+    Pt = Pt or self.Pt
+    eta = eta or self.eta
+    phi = phi or self.phi
+    m = m or self.m
+    # generate a TLorentzVector to handle additions
+    vector = TLorentzVector()
+    vector.SetPtEtaPhiM(self.Pt, self.eta, self.phi, self.m)
+    return vector
+
+  def rapidity(self):
+    return np.log( ((self.m**2. + self.Pt**2. * np.cosh(self.eta)**2.)**0.5 + self.Pt * np.sinh(self.eta) )/(self.m**2. + self.Pt**2.)**0.5)
 
   def __str__(self):
-    return "Jet object:\n\tPhi: %0.4f\n\tEta: %0.4f\n\tE: %0.2f (GeV)\n\tpT: %0.2f (GeV)\n\tm: %0.2f (GeV)\n\tInputted: %s\n\tTriggered: %s" % (self.phi, self.eta, self.E, self.pT, self.m, self.inputted(), self.triggered())
-
-  def inputted(self):
-    return self.input_energy > self.inputThresh
-
-  def triggered(self):
-    return self.trigger_energy > self.triggerThresh
+    return "Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)\n\tnum subjets: %d\n\ttau:\n\t\t%0.2f\n\t\t%0.2f\n\t\t%0.2f\n\tsplit:\n\t\t%0.2f\n\t\t%0.2f\n\t\t%0.2f" % (self.phi, self.eta, self.E, self.Pt, self.m, self.nsj, self.tau[0], self.tau[1], self.tau[2], self.split[0], self.split[1], self.split[2])
 
 class Events:
   def __init__(self, rootfile):
+    print 'THIS CLASS IS BEING DEPRECATED SOON'
     self.rootfile = rootfile
     self.events   = []
     self.load()
@@ -273,14 +274,14 @@ class Event:
     for jetE, jetPt, jetM, jetEta, jetPhi, nsj, tau1, tau2, tau3, split12, split23, split34 in zip(*event):
       # don't forget to scale from [MeV] -> [GeV]
       self.jets.append(Jet(E=jetE/1000.,\
-                           pT=jetPt/1000.,\
+                           Pt=jetPt/1000.,\
                            m=jetM/1000.,\
                            eta=jetEta,\
                            phi=jetPhi,\
                            nsj=nsj,\
                            tau=[tau1,tau2,tau3],\
                            split=[split12,split23,split34]))
-    self.jets.sort(key=lambda jet: jet.pT, reverse=True)
+    self.jets.sort(key=lambda jet: jet.Pt, reverse=True)
 
 
   def __iter__(self):

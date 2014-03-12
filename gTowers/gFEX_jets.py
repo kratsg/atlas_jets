@@ -109,7 +109,7 @@ class Grid:
 
     #build up the rectangular grid for the coordinates
     tower_mesh_coords = self.__rectangular_mesh( minX, maxX, minY, maxY )
-    uniform_towerdE = tower.pT
+    uniform_towerdE = tower.Pt
     tower_mesh = ([tuple(cell_coord), uniform_towerdE] for cell_coord in tower_mesh_coords if self.boundary_conditions(cell_coord) )
     for cell_coord, fractional_energy in tower_mesh:
       try:
@@ -159,7 +159,7 @@ class Grid:
     cell_jetcoord = self.phieta2cell(jet.coord)
     cell_radius = jet.radius/self.cell_resolution
     # what we define as the jet energy for `self.__jetdPt`
-    jet_energy = jet.pT
+    jet_energy = jet.Pt
     # always start with a square mesh
     square_mesh_coords = self.__square_mesh(cell_jetcoord, cell_radius)
     if self.recon_algo == 'uniform':
@@ -243,41 +243,47 @@ class SeedFilter:
 
 class Tower:
   def __init__(self,\
-               E,\
-               num_cells,\
-               etaMin,\
-               etaMax,\
-               phiMin,\
-               phiMax):
-    self.E = E
-    self.num_cells = num_cells
-    self.etaMin = etaMin
-    self.etaMax = etaMax
-    self.phiMin = phiMin
-    self.phiMax = phiMax
+               E         = 0.0,\
+               Et        = 0.0,\
+               m         = 0.0,\
+               num_cells = 0,\
+               etaMin    = 0.0,\
+               etaMax    = 0.0,\
+               phiMin    = 0.0,\
+               phiMax    = 0.0):
+    self.E = np.float(E)
+    self.Et = np.float(Et)
+    self.m = np.float(m) # note: m =0 for towers, so E = p --> Et = Pt
+    self.num_cells = np.int(num_cells)
+    self.etaMin = np.float(etaMin)
+    self.etaMax = np.float(etaMax)
+    self.phiMin = np.float(phiMin)
+    self.phiMax = np.float(phiMax)
     # set the center of the tower to the geometric center
     self.eta = (self.etaMax + self.etaMin)/2.0
     self.phi = (self.phiMax + self.phiMin)/2.0
-    # calculate pT
-    self.pT = self.E/np.cosh(self.eta)
+    # calculate Pt
+    self.Pt = self.Et
+
+  def vector(self, Pt = None, eta = None, phi = None, m = None):
+    Pt = Pt or self.Pt
+    eta = eta or self.eta
+    phi = phi or self.phi
+    m = m or self.m
     # generate a TLorentzVector to handle additions
-    #   note: m = 0 for towers, so E = p --> ET = pT
-    self.TLorentzVector = TLorentzVector()
-    self.TLorentzVector.SetPtEtaPhiM(self.pT, self.eta, self.phi, 0.0)
+    vector = TLorentzVector()
+    vector.SetPtEtaPhiM(self.Pt, self.eta, self.phi, self.m)
+    return vector
 
   def __str__(self):
     return "Tower object:\n\tE: %0.4f (GeV)\n\tnum_cells: %d\n\tphi: (%0.4f,%0.4f) \td = %0.4f\n\teta: (%0.4f, %0.4f) \td = %0.4f" % (self.E, self.num_cells, self.phiMin, self.phiMax, self.phiMax - self.phiMin, self.etaMin, self.etaMax, self.etaMax - self.etaMin)
 
 class Jet:
   def __init__(self,\
-               inputThresh    = 200.,\
-               triggerThresh  = 150.,\
                eta            = 0.0,\
                phi            = 0.0,\
-               TLorentzVector = TLorentzVector(),\
+               vector         = TLorentzVector(),\
                radius         = 1.0,\
-               input_energy   = 0.0,\
-               trigger_energy = 0.0,
                seed           = Tower(0.,0.,0.,0.,0.,0.)):
     '''Defines a jet'''
     """
@@ -297,33 +303,24 @@ class Jet:
       input_energy       : the input energy of the jet
       trigger_energy     : amount of energy actually recorded on the grid
     """
-    self.inputThresh    = np.float(inputThresh)
-    self.triggerThresh  = np.float(triggerThresh)
-    self.phi            = np.float(phi)
-    self.eta            = np.float(eta)
-    self.coord          = (self.phi, self.eta)
-    self.TLorentzVector = TLorentzVector
+    self.phi    = np.float(phi)
+    self.eta    = np.float(eta)
+    self.coord  = (self.phi, self.eta)
+    self.vector = vector
     # setting up basic details from vector
-    self.E = self.TLorentzVector.E()
-    self.pT = self.TLorentzVector.Pt()
-    self.m = self.TLorentzVector.M()
+    self.E      = self.vector.E()
+    self.Pt     = self.vector.Pt()
+    self.m      = self.vector.M()
     # setting up jet details
-    self.radius         = np.float(radius)
-    self.input_energy   = np.float(self.pT)
-    self.trigger_energy = np.float(self.pT)
+    self.radius = np.float(radius)
 
   def __str__(self):
-    return "Jet object:\n\tPhi: %0.4f\n\tEta: %0.4f\n\tE: %0.2f (GeV)\n\tpT: %0.2f (GeV)\n\tm: %0.2f (GeV)\n\tInputted: %s\n\tTriggered: %s" % (self.phi, self.eta, self.E, self.pT, self.m, self.inputted(), self.triggered())
-
-  def inputted(self):
-    return self.input_energy > self.inputThresh
-
-  def triggered(self):
-    return self.trigger_energy > self.triggerThresh
+    return "Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)" % (self.phi, self.eta, self.E, self.Pt, self.m)
 
 # to be grammatically correct, it should be Events' Towers
 class TowerEvents:
   def __init__(self, rootfile, seed_filter = SeedFilter()):
+    print 'DEPRECATING THIS CLASS'
     self.rootfile    = rootfile
     self.events      = []
     self.seed_filter = seed_filter
@@ -359,21 +356,20 @@ class TowerEvent:
     # note that unlike David's data, it isn't a "tuple" of 215 items
     # holy mother of god, please do not blame me for the fact that
     #    I'm ignoring like 210 items in this list, we only want gTower info
-    for gTowerE, gTowerNCells, gTowerEtaMin, gTowerEtaMax, gTowerPhiMin, gTowerPhiMax in zip(*event):
-      self.towers.append(Tower(E=gTowerE,\
+    for gTowerE, gTowerEt, gTowerNCells, gTowerEtaMin, gTowerEtaMax, gTowerPhiMin, gTowerPhiMax in zip(*event):
+      self.towers.append(Tower(E=gTowerE/1000.,\
+                               Et=gTowerEt,\
                                num_cells=gTowerNCells,\
                                etaMin=gTowerEtaMin,\
                                etaMax=gTowerEtaMax,\
                                phiMin=gTowerPhiMin,\
                                phiMax=gTowerPhiMax))
-
-    self.towers.sort(key=lambda tower: tower.pT, reverse=True)
-
-    self.E = [tower.E for tower in self.towers]
-    self.phiMin = np.min([tower.phiMin for tower in self.towers])
-    self.etaMin = np.min([tower.etaMin for tower in self.towers])
-    self.phiMax = np.max([tower.phiMax for tower in self.towers])
-    self.etaMax = np.max([tower.etaMax for tower in self.towers])
+    self.towers.sort(key=lambda tower: tower.Et, reverse=True)
+    #self.E = [tower.E for tower in self.towers]
+    #self.phiMin = np.min([tower.phiMin for tower in self.towers])
+    #self.etaMin = np.min([tower.etaMin for tower in self.towers])
+    #self.phiMax = np.max([tower.phiMax for tower in self.towers])
+    #self.etaMax = np.max([tower.etaMax for tower in self.towers])
 
   def set_seed_filter(self, seed_filter):
     self.seed_filter = seed_filter
@@ -394,17 +390,15 @@ class TowerEvent:
     self.event = Event(jets=jets)
 
   def __seed_to_jet(self, seed):
-    # note: each tower has m=0, so E = p, ET = pT
-    l = seed.TLorentzVector
+    # note: each tower has m=0, so E = p, ET = Pt
+    l = seed.vector()
     for tower in self.__towers_around(seed):
-      radius = 1.0
-      normalization = 2. * np.pi * radius**2. * erf( 0.92 * (2.**-0.5) )**2.
-      exponential = np.exp(-( (seed.phi - tower.phi)**2./(2. * (radius**2.)) + (seed.eta - tower.eta)**2./(2.*(radius**2.)) ))
-      towerTLorentzVector = TLorentzVector()
-      towerTLorentzVector.SetPtEtaPhiM(tower.E/np.cosh(tower.eta), tower.eta, tower.phi, 0.0)
+      #radius = 1.0
+      #normalization = 2. * np.pi * radius**2. * erf( 0.92 * (2.**-0.5) )**2.
+      #exponential = np.exp(-( (seed.phi - tower.phi)**2./(2. * (radius**2.)) + (seed.eta - tower.eta)**2./(2.*(radius**2.)) ))
       #towerTLorentzVector.SetPtEtaPhiM(tower.E/np.cosh(tower.eta) * exponential/normalization, tower.eta, tower.phi, 0.0)
-      l += towerTLorentzVector
-    return Jet(eta=seed.eta, phi=seed.phi, TLorentzVector = l, seed=seed)
+      l += tower.vector()
+    return Jet(eta=seed.eta, phi=seed.phi, vector = l, seed=seed)
 
   def __towers_around(self, seed, radius=1.0):
     return [tower for tower in self.towers if np.sqrt((tower.phi - seed.phi)**2. + (tower.eta - seed.eta)**2.) <= radius and tower != seed]
@@ -425,10 +419,11 @@ class TowerEvent:
     return self.towers[index]
 
   def __str__(self):
-    return "TowerEvent object with %d Tower objects\n\tphi: (%0.4f, %0.4f)\n\teta: (%0.4f, %0.4f)" % (len(self.towers), self.phiMin, self.phiMax, self.etaMin, self.etaMax)
+    return "TowerEvent object with %d Tower objects" % (len(self.towers))
 
 class Events:
   def __init__(self, events = []):
+    print 'DEPRECATING THIS SHIT'
     self.events = events
 
   def __iter__(self):
@@ -452,7 +447,7 @@ class Events:
 class Event:
   def __init__(self, jets = []):
     self.jets = jets
-    self.jets.sort(key=lambda jet: jet.pT, reverse=True)
+    self.jets.sort(key=lambda jet: jet.Pt, reverse=True)
 
   def __iter__(self):
     # initialize to start of list
@@ -478,8 +473,8 @@ class Analysis:
     self.num_bins = num_bins
 
   def Efficiency(self):
-    input_jets = np.array([jet.pT for event in self.events for jet in event[:2]])
-    trigger_jets = np.array([jet.pT for event in self.events for jet in event[:2] if jet.triggered()])
+    input_jets = np.array([jet.Pt for event in self.events for jet in event[:2]])
+    trigger_jets = np.array([jet.Pt for event in self.events for jet in event[:2] if jet.triggered()])
 
     bin_range = (input_jets.min(), input_jets.max())
     histogram_input = np.histogram(input_jets, range=bin_range, bins=self.num_bins)
