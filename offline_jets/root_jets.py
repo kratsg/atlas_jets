@@ -270,13 +270,16 @@ class Event:
     # format generally comes as a tuple of 10 lists, each list
     #    is filled by that property for all jets like so
     #  ( [ jetE_0, jetE_1, jetE_2], [ jetPt_0, jetPt_1, jetPt_2 ], ...)
-    for jetE, jetPt, jetM, jetEta, jetPhi in zip(*event):
+    for jetE, jetPt, jetM, jetEta, jetPhi, nsj, tau1, tau2, tau3, split12, split23, split34 in zip(*event):
       # don't forget to scale from [MeV] -> [GeV]
       self.jets.append(Jet(E=jetE/1000.,\
                            pT=jetPt/1000.,\
                            m=jetM/1000.,\
                            eta=jetEta,\
-                           phi=jetPhi))
+                           phi=jetPhi,\
+                           nsj=nsj,\
+                           tau=[tau1,tau2,tau3],\
+                           split=[split12,split23,split34]))
     self.jets.sort(key=lambda jet: jet.pT, reverse=True)
 
 
