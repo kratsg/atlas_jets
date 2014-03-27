@@ -276,7 +276,7 @@ class Tower:
     return vector
 
   def __str__(self):
-    return "Tower object:\n\tE: %0.4f (GeV)\n\tnum_cells: %d\n\tphi: (%0.4f,%0.4f) \td = %0.4f\n\teta: (%0.4f, %0.4f) \td = %0.4f" % (self.E, self.num_cells, self.phiMin, self.phiMax, self.phiMax - self.phiMin, self.etaMin, self.etaMax, self.etaMax - self.etaMin)
+    return "Tower object:\n\tE: %0.4f (GeV)\n\tEt: %0.4f (GeV)\n\tnum_cells: %d\n\tphi: (%0.4f,%0.4f) \td = %0.4f\n\teta: (%0.4f, %0.4f) \td = %0.4f" % (self.E, self.Et, self.num_cells, self.phiMin, self.phiMax, self.phiMax - self.phiMin, self.etaMin, self.etaMax, self.etaMax - self.etaMin)
 
 class Jet:
   def __init__(self,\
@@ -357,8 +357,11 @@ class TowerEvent:
     # holy mother of god, please do not blame me for the fact that
     #    I'm ignoring like 210 items in this list, we only want gTower info
     for gTowerE, gTowerEt, gTowerNCells, gTowerEtaMin, gTowerEtaMax, gTowerPhiMin, gTowerPhiMax in zip(*event):
+      if gTowerEt/1000. < 1.0:
+        # noisy gTowers do not need to be included
+        continue
       self.towers.append(Tower(E=gTowerE/1000.,\
-                               Et=gTowerEt,\
+                               Et=gTowerEt/1000.,\
                                num_cells=gTowerNCells,\
                                etaMin=gTowerEtaMin,\
                                etaMax=gTowerEtaMax,\
