@@ -1,7 +1,5 @@
 ''' Class definitions for dealing with ATLAS jets using towers'''
 
-#ROOT is needed to deal with rootfiles
-import ROOT
 #import TLorentzVector to do a vector-sum
 from ROOT import TLorentzVector
 
@@ -228,12 +226,12 @@ class Grid:
     return "Grid object:\n\tPhi: %s\n\tEta: %s\n\tResolution: %0.2f" % (self.domain[0], self.domain[1], self.cell_resolution)
 
 class SeedFilter:
-  def __init__(self, ETthresh = 0, numSeeds = 1.0e5):
+  def __init__(self, ETthresh = 0., numSeeds = 20.):
     self.ETthresh = ETthresh
     self.numSeeds = int(numSeeds)
 
   def filter(self, seeds):
-    return [seed for seed in seeds if seed.E/np.cosh(seed.eta) > self.ETthresh][:self.numSeeds]
+    return [seed for seed in seeds if seed.Et > self.ETthresh][:self.numSeeds]
 
   def __call__(self, seeds):
     return self.filter(seeds)
@@ -309,6 +307,7 @@ class Jet:
     self.vector = vector
     # setting up basic details from vector
     self.E      = self.vector.E()
+    self.Et     = self.vector.Et()
     self.Pt     = self.vector.Pt()
     self.m      = self.vector.M()
     # setting up jet details
@@ -317,49 +316,16 @@ class Jet:
   def __str__(self):
     return "Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)" % (self.phi, self.eta, self.E, self.Pt, self.m)
 
-# to be grammatically correct, it should be Events' Towers
-class TowerEvents:
-  def __init__(self, rootfile, seed_filter = SeedFilter()):
-    print 'DEPRECATING THIS CLASS'
-    self.rootfile    = rootfile
-    self.events      = []
-    self.seed_filter = seed_filter
-    self.load()
-
-  def load(self):
-    indices = [self.rootfile.data.dtype.names.index(name) for name in self.rootfile.data.dtype.names if 'gTower' in name]
-    self.events = [TowerEvent(event=[event[i] for i in indices], seed_filter=self.seed_filter) for event in self.rootfile.data]
-    print 'Loaded gTower jets'
-
-  def __iter__(self):
-    # initialize to start of list
-    self.iter_index = -1
-    # `return self` to use `next()`
-    return self
-
-  def next(self):
-    self.iter_index += 1
-    if self.iter_index == len(self.events):
-      raise StopIteration
-    return self.events[self.iter_index]
-
-  def __getitem__(self, index):
-    return self.events[index]
-
-  def __str__(self):
-    return "TowerEvents object with %d TowerEvent objects" % len(self.events)
-
 class TowerEvent:
-  def __init__(self, event = [], seed_filter = SeedFilter()):
+  def __init__(self, event = [], seed_filter = SeedFilter(), noise_filter = 1.0):
     self.towers = []
     self.seed_filter = seed_filter
     # note that unlike David's data, it isn't a "tuple" of 215 items
     # holy mother of god, please do not blame me for the fact that
     #    I'm ignoring like 210 items in this list, we only want gTower info
     for gTowerE, gTowerEt, gTowerNCells, gTowerEtaMin, gTowerEtaMax, gTowerPhiMin, gTowerPhiMax in zip(*event):
-      if gTowerEt/1000. < 1.0:
-        # noisy gTowers do not need to be included
-        continue
+      # noisy gTowers do not need to be included
+      continue if gTowerEt/1000. < noise_filter
       self.towers.append(Tower(E=gTowerE/1000.,\
                                Et=gTowerEt/1000.,\
                                num_cells=gTowerNCells,\
@@ -368,11 +334,6 @@ class TowerEvent:
                                phiMin=gTowerPhiMin,\
                                phiMax=gTowerPhiMax))
     self.towers.sort(key=lambda tower: tower.Et, reverse=True)
-    #self.E = [tower.E for tower in self.towers]
-    #self.phiMin = np.min([tower.phiMin for tower in self.towers])
-    #self.etaMin = np.min([tower.etaMin for tower in self.towers])
-    #self.phiMax = np.max([tower.phiMax for tower in self.towers])
-    #self.etaMax = np.max([tower.etaMax for tower in self.towers])
 
   def set_seed_filter(self, seed_filter):
     self.seed_filter = seed_filter
@@ -424,29 +385,6 @@ class TowerEvent:
   def __str__(self):
     return "TowerEvent object with %d Tower objects" % (len(self.towers))
 
-class Events:
-  def __init__(self, events = []):
-    print 'DEPRECATING THIS SHIT'
-    self.events = events
-
-  def __iter__(self):
-    # initialize to start of list
-    self.iter_index = -1
-    # `return self` to use `next()`
-    return self
-
-  def next(self):
-    self.iter_index += 1
-    if self.iter_index == len(self.events):
-      raise StopIteration
-    return self.events[self.iter_index]
-
-  def __getitem__(self, index):
-    return self.events[index]
-
-  def __str__(self):
-    return "Events object with %d Event objects" % len(self.events)
- 
 class Event:
   def __init__(self, jets = []):
     self.jets = jets
@@ -472,6 +410,7 @@ class Event:
 
 class Analysis:
   def __init__(self, events = [], num_bins = 50):
+    print 'DEPRECATING ANALYSIS'
     self.events = events
     self.num_bins = num_bins
 

@@ -1,7 +1,5 @@
 ''' Class definitions for dealing with ATLAS jets'''
 
-#ROOT is needed to deal with rootfiles
-import ROOT
 from ROOT import TLorentzVector
 
 #root_numpy is needed to read the rootfile
@@ -234,37 +232,6 @@ class Jet:
   def __str__(self):
     return "Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)\n\tnum subjets: %d\n\ttau:\n\t\t%0.2f\n\t\t%0.2f\n\t\t%0.2f\n\tsplit:\n\t\t%0.2f\n\t\t%0.2f\n\t\t%0.2f" % (self.phi, self.eta, self.E, self.Pt, self.m, self.nsj, self.tau[0], self.tau[1], self.tau[2], self.split[0], self.split[1], self.split[2])
 
-class Events:
-  def __init__(self, rootfile):
-    print 'THIS CLASS IS BEING DEPRECATED SOON'
-    self.rootfile = rootfile
-    self.events   = []
-    self.load()
-
-  def load(self):
-    # we want jet_AntiKt4LCTopo_ [E, pt, m, eta, phi] but not [n]
-    indices = [self.rootfile.data.dtype.names.index(name) for name in self.rootfile.data.dtype.names if 'jet_AntiKt4LCTopo_' in name][1:6]
-    self.events = [Event(event=[event[i] for i in indices]) for event in self.rootfile.data]
-    print 'Loaded offline events.'
-
-  def __iter__(self):
-    # initialize to start of list
-    self.iter_index = -1
-    # `return self` to use `next()`
-    return self
-
-  def next(self):
-    self.iter_index += 1
-    if self.iter_index == len(self.events):
-      raise StopIteration
-    return self.events[self.iter_index]
-
-  def __getitem__(self, index):
-    return self.events[index]
-
-  def __str__(self):
-    return "Events object with %d Event objects" % len(self.events)
-  
 class Event:
   def __init__(self, event = []):
     self.jets = []
