@@ -325,7 +325,8 @@ class TowerEvent:
     #    I'm ignoring like 210 items in this list, we only want gTower info
     for gTowerE, gTowerEt, gTowerNCells, gTowerEtaMin, gTowerEtaMax, gTowerPhiMin, gTowerPhiMax in zip(*event):
       # noisy gTowers do not need to be included
-      continue if gTowerEt/1000. < noise_filter
+      if gTowerEt/1000. < noise_filter:
+        continue
       self.towers.append(Tower(E=gTowerE/1000.,\
                                Et=gTowerEt/1000.,\
                                num_cells=gTowerNCells,\
