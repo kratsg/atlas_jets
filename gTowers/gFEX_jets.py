@@ -314,7 +314,7 @@ class Jet:
     self.radius = np.float(radius)
 
   def __str__(self):
-    return "Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)" % (self.phi, self.eta, self.E, self.Pt, self.m)
+    return "gFEX Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)" % (self.phi, self.eta, self.E, self.Pt, self.m)
 
 class TowerEvent:
   def __init__(self, event = [], seed_filter = SeedFilter(), noise_filter = 1.0):

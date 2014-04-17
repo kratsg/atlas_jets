@@ -230,15 +230,19 @@ class Jet:
     return np.log( ((self.m**2. + self.Pt**2. * np.cosh(self.eta)**2.)**0.5 + self.Pt * np.sinh(self.eta) )/(self.m**2. + self.Pt**2.)**0.5)
 
   def __str__(self):
-    return "Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)\n\tnum subjets: %d\n\ttau:\n\t\t%0.2f\n\t\t%0.2f\n\t\t%0.2f\n\tsplit:\n\t\t%0.2f\n\t\t%0.2f\n\t\t%0.2f" % (self.phi, self.eta, self.E, self.Pt, self.m, self.nsj, self.tau[0], self.tau[1], self.tau[2], self.split[0], self.split[1], self.split[2])
+    return "Offline Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)\n\tnum subjets: %d\n\ttau:\n\t\t%0.2f\n\t\t%0.2f\n\t\t%0.2f\n\tsplit:\n\t\t%0.2f\n\t\t%0.2f\n\t\t%0.2f" % (self.phi, self.eta, self.E, self.Pt, self.m, self.nsj, self.tau[0], self.tau[1], self.tau[2], self.split[0], self.split[1], self.split[2])
 
 class Event:
-  def __init__(self, event = []):
+  # ToDo: rewrite Event[] to be a dictionary so we don't rely on ordering
+  def __init__(self, event = [], subjetPt_thresh = 20.0):
     self.jets = []
-    # format generally comes as a tuple of 10 lists, each list
-    #    is filled by that property for all jets like so
-    #  ( [ jetE_0, jetE_1, jetE_2], [ jetPt_0, jetPt_1, jetPt_2 ], ...)
-    for jetE, jetPt, jetM, jetEta, jetPhi, nsj, tau1, tau2, tau3, split12, split23, split34 in zip(*event):
+    # format comes in a list of jet data + subjet pt, identified by index
+    jetData = event[:-1]
+    subjetsPt = event[-1]/1000.
+    for jetE, jetPt, jetM, jetEta, jetPhi, nsj, tau1, tau2, tau3, split12, split23, split34, subjets_index in zip(*jetData):
+      # first satisfy our threshold requirement
+      if not np.all(subjetsPt[subjets_index] >= subjetPt_thresh):
+        continue
       # don't forget to scale from [MeV] -> [GeV]
       self.jets.append(Jet(E=jetE/1000.,\
                            Pt=jetPt/1000.,\
