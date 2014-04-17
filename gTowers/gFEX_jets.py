@@ -8,6 +8,10 @@ import root_numpy as rnp
 
 # numpy and matplotlib (mpl) are used for computing and plotting 
 import numpy as np
+
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as pl
 
 def erf(x):
