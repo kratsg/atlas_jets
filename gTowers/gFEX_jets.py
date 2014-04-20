@@ -266,6 +266,8 @@ class Tower:
     self.phi = (self.phiMax + self.phiMin)/2.0
     # calculate Pt
     self.Pt = self.Et
+    # calculate area
+    self.area = np.fabs((self.etaMax - self.etaMin) * (self.phiMax - self.phiMin))
 
   def vector(self, Pt = None, eta = None, phi = None, m = None):
     Pt = Pt or self.Pt
