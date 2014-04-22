@@ -281,6 +281,19 @@ class Tower:
     vector.SetPtEtaPhiM(self.Pt, self.eta, self.phi, self.m)
     return vector
 
+  def region(self):
+    if self.eta < -2.5:
+      return 4
+    elif -2.5 <= self.eta < 0.:
+      return 3
+    elif 0. <= self.eta < 2.5:
+      return 2
+    elif 2.5 < self.eta:
+      return 1
+    else:
+      print "Warning, region 0"
+      return 0 #should never happen
+
   def __str__(self):
     return "Tower object:\n\tE: %0.4f (GeV)\n\tEt: %0.4f (GeV)\n\tnum_cells: %d\n\tphi: (%0.4f,%0.4f) \td = %0.4f\n\teta: (%0.4f, %0.4f) \td = %0.4f" % (self.E, self.Et, self.num_cells, self.phiMin, self.phiMax, self.phiMax - self.phiMin, self.etaMin, self.etaMax, self.etaMax - self.etaMin)
 
