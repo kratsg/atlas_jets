@@ -8,6 +8,7 @@ import root_numpy as rnp
 
 # numpy and matplotlib (mpl) are used for computing and plotting 
 import numpy as np
+np.seterr(divide='ignore', invalid='ignore') #numpy complains on line 271 about Tower::rho calculation
 
 import matplotlib
 matplotlib.use('Agg')
@@ -28,7 +29,7 @@ def erf(x):
   else:
     # save the sign of x
     sign = 1 if x >= 0 else -1
-    x = np.fabs(x)
+    x = np.abs(x)
     # constants
     a1 =  0.254829592
     a2 = -0.284496736
@@ -250,9 +251,9 @@ class Tower:
                m         = 0.0,\
                num_cells = 0,\
                etaMin    = 0.0,\
-               etaMax    = 0.0,\
+               etaMax    = 0.2,\
                phiMin    = 0.0,\
-               phiMax    = 0.0):
+               phiMax    = 0.2):
     self.E = np.float(E)
     self.Et = np.float(Et)
     self.m = np.float(m) # note: m =0 for towers, so E = p --> Et = Pt
@@ -264,12 +265,10 @@ class Tower:
     # set the center of the tower to the geometric center
     self.eta = (self.etaMax + self.etaMin)/2.0
     self.phi = (self.phiMax + self.phiMin)/2.0
-    # calculate Pt
-    self.Pt = self.Et
     # calculate area
-    self.area = np.fabs((self.etaMax - self.etaMin) * (self.phiMax - self.phiMin))
+    self.area = np.abs((self.etaMax - self.etaMin) * (self.phiMax - self.phiMin))
     # calculate rho
-    self.rho = self.Et / self.area
+    self.rho = self.Et/self.area
 
   def vector(self, Pt = None, eta = None, phi = None, m = None):
     Pt = Pt or self.Pt
