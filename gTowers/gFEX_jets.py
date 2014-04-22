@@ -287,7 +287,7 @@ class Tower:
       return 3
     elif 0. <= self.eta < 2.5:
       return 2
-    elif 2.5 < self.eta:
+    elif 2.5 <= self.eta:
       return 1
     else:
       print "Warning, region 0"
