@@ -337,7 +337,7 @@ class Jet:
     return "gFEX Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)" % (self.phi, self.eta, self.E, self.Pt, self.m)
 
 class TowerEvent:
-  def __init__(self, event = [], seed_filter = SeedFilter(), noise_filter = 1.0):
+  def __init__(self, event = [], seed_filter = SeedFilter(), noise_filter = 0.0, signal_thresh = 1.e5):
     self.towers = []
     self.seed_filter = seed_filter
     # note that unlike David's data, it isn't a "tuple" of 215 items
@@ -345,7 +345,7 @@ class TowerEvent:
     #    I'm ignoring like 210 items in this list, we only want gTower info
     for gTowerE, gTowerEt, gTowerNCells, gTowerEtaMin, gTowerEtaMax, gTowerPhiMin, gTowerPhiMax in zip(*event):
       # noisy gTowers do not need to be included
-      if gTowerEt/1000. < noise_filter:
+      if signal_thresh < gTowerEt/1000. < noise_filter:
         continue
       self.towers.append(Tower(E=gTowerE/1000.,\
                                Et=gTowerEt/1000.,\
