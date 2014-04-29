@@ -277,7 +277,7 @@ class Tower:
     m = m or self.m
     # generate a TLorentzVector to handle additions
     vector = TLorentzVector()
-    vector.SetPtEtaPhiM(self.Pt, self.eta, self.phi, self.m)
+    vector.SetPtEtaPhiM(Pt, eta, phi, m)
     return vector
 
   def region(self):
