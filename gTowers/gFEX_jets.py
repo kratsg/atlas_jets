@@ -271,7 +271,7 @@ class Tower:
     self.rho = self.Et/self.area
 
   def vector(self, Pt = None, eta = None, phi = None, m = None):
-    Pt = Pt or self.Pt
+    Pt = Pt or self.Et
     eta = eta or self.eta
     phi = phi or self.phi
     m = m or self.m
