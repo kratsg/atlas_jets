@@ -318,14 +318,24 @@ class Jet:
     """
     self.phi    = np.float(phi)
     self.eta    = np.float(eta)
-    self.vector = vector
     # setting up basic details from vector
-    self.E      = self.vector.E()
-    self.Et     = self.vector.Et()
-    self.Pt     = self.vector.Pt()
-    self.m      = self.vector.M()
+    self.E      = vector.E()
+    self.Et     = vector.Et()
+    self.Pt     = vector.Pt()
+    self.m      = vector.M()
+    self.area   = area
     # setting up jet details
     self.radius = np.float(radius)
+
+  def vector(self, Pt = None, eta = None, phi = None, m = None):
+    Pt = Pt or self.Et
+    eta = eta or self.eta
+    phi = phi or self.phi
+    m = m or self.m
+    # generate a TLorentzVector to handle additions
+    vector = TLorentzVector()
+    vector.SetPtEtaPhiM(Pt, eta, phi, m)
+    return vector
 
   def __str__(self):
     return "gFEX Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)" % (self.phi, self.eta, self.E, self.Pt, self.m)
