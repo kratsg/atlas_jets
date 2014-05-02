@@ -290,7 +290,7 @@ class Tower:
     elif 1.6 <= self.eta:
       return 4
     else:
-      print "Warning, region 0"
+      print "Warning, region 0: %0.4f" % self.eta
       return 0 #should never happen
 
   def __str__(self):
