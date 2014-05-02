@@ -238,15 +238,12 @@ class Jet:
 
 class Event:
   # ToDo: rewrite Event[] to be a dictionary so we don't rely on ordering
-  def __init__(self, event = [], subjetPt_thresh = 20.0):
+  def __init__(self, event = []):
     self.jets = []
     # format comes in a list of jet data + subjet pt, identified by index
     jetData = event[:-1]
     subjetsPt = event[-1]/1000.
     for jetE, jetPt, jetM, jetEta, jetPhi, nsj, tau1, tau2, tau3, split12, split23, split34, subjets_index in zip(*jetData):
-      # first satisfy our threshold requirement
-      if not np.all(subjetsPt[subjets_index] >= subjetPt_thresh):
-        continue
       # don't forget to scale from [MeV] -> [GeV]
       self.jets.append(Jet(E=jetE/1000.,\
                            Pt=jetPt/1000.,\
@@ -254,10 +251,10 @@ class Event:
                            eta=jetEta,\
                            phi=jetPhi,\
                            nsj=nsj,\
-                           tau=[tau1,tau2,tau3],\
-                           split=[split12,split23,split34]))
+                           tau=np.array([tau1,tau2,tau3]),\
+                           split=np.array([split12,split23,split34]),\
+                           subjetsPt=subjetsPt[subjets_index]))
     self.jets.sort(key=lambda jet: jet.Pt, reverse=True)
-
 
   def __iter__(self):
     # initialize to start of list

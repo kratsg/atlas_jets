@@ -328,7 +328,7 @@ class Jet:
     self.radius = np.float(radius)
 
   def vector(self, Pt = None, eta = None, phi = None, m = None):
-    Pt = Pt or self.Et
+    Pt = Pt or self.Pt
     eta = eta or self.eta
     phi = phi or self.phi
     m = m or self.m

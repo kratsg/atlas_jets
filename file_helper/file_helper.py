@@ -1,3 +1,8 @@
+'''
+What do I want to do with this file? Re-write it to provide a wrapping iterator over the ttree
+so it's more pythonic with my code and I deal less with how the implementations of the iteration is
+'''
+
 import os
 import root_numpy as rnp
 

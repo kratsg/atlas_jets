@@ -1,3 +1,5 @@
+'''Probably deprecating this, move out'''
+
 # numpy and matplotlib (mpl) are used for computing and plotting 
 import numpy as np
 import matplotlib.pyplot as pl
