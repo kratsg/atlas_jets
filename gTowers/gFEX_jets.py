@@ -281,14 +281,14 @@ class Tower:
     return vector
 
   def region(self):
-    if self.eta < -2.5:
-      return 4
-    elif -2.5 <= self.eta < 0.:
+    if self.eta < -1.6:
       return 3
-    elif 0. <= self.eta < 2.5:
-      return 2
-    elif 2.5 <= self.eta:
+    elif -1.6 <= self.eta < 0.:
       return 1
+    elif 0. <= self.eta < 1.6:
+      return 2
+    elif 1.6 <= self.eta:
+      return 4
     else:
       print "Warning, region 0"
       return 0 #should never happen
