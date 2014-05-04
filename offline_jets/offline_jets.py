@@ -195,7 +195,8 @@ class Jet:
                radius         = 1.0,\
                nsj            = 0,\
                tau            = [],\
-               split          = []):
+               split          = [],\
+               subjetsPt      = []):
     '''Defines a jet'''
     """
       energy             : jet energy, E
@@ -219,6 +220,7 @@ class Jet:
     self.nsj            = np.int(nsj)
     self.tau            = np.array(tau)
     self.split          = np.array(split)
+    self.subjetsPt      = np.array(subjetsPt)
 
   def vector(self, Pt = None, eta = None, phi = None, m = None):
     Pt = Pt or self.Pt
