@@ -337,6 +337,19 @@ class Jet:
     vector.SetPtEtaPhiM(Pt, eta, phi, m)
     return vector
 
+  def region(self):
+    if self.eta < -1.6:
+      return 3
+    elif -1.6 <= self.eta < 0.:
+      return 1
+    elif 0. <= self.eta < 1.6:
+      return 2
+    elif 1.6 <= self.eta:
+      return 4
+    else:
+      print "Warning, region 0: %0.4f" % self.eta
+      return 0 #should never happen
+
   def __str__(self):
     return "gFEX Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)" % (self.phi, self.eta, self.E, self.Pt, self.m)
 
