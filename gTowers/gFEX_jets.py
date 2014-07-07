@@ -303,7 +303,8 @@ class Jet:
                vector         = TLorentzVector(),\
                radius         = 1.0,\
                seed           = Tower(0.,0.,0.,0.,0.,0.),\
-               area           = 0.04):
+               area           = 0.04,\
+               towers_around  = []):
     '''Defines a jet'''
     """
       vector             : a TLorentzVector() defined from ROOT that contains
@@ -315,6 +316,7 @@ class Jet:
         - phi            : polar angle in the transverse plane
         -- theta is angle between particle momentum and the beam axis
         -- see more: http://en.wikipedia.org/wiki/Pseudorapidity
+      towers_around      : contains the top 4 gTowers
     """
     self.phi    = np.float(phi)
     self.eta    = np.float(eta)
@@ -326,6 +328,7 @@ class Jet:
     self.area   = area
     # setting up jet details
     self.radius = np.float(radius)
+    self.towers_around = towers_around
 
   def vector(self, Pt = None, eta = None, phi = None, m = None):
     Pt = Pt or self.Pt
@@ -395,14 +398,15 @@ class TowerEvent:
     # note: each tower has m=0, so E = p, ET = Pt
     l = seed.vector()
     jet_area = seed.area
-    for tower in self.__towers_around(seed):
+    towers_around = self.__towers_around(seed)
+    for tower in towers_around:
       #radius = 1.0
       #normalization = 2. * np.pi * radius**2. * erf( 0.92 * (2.**-0.5) )**2.
       #exponential = np.exp(-( (seed.phi - tower.phi)**2./(2. * (radius**2.)) + (seed.eta - tower.eta)**2./(2.*(radius**2.)) ))
       #towerTLorentzVector.SetPtEtaPhiM(tower.E/np.cosh(tower.eta) * exponential/normalization, tower.eta, tower.phi, 0.0)
       l += tower.vector()
       jet_area += tower.area
-    return Jet(eta=seed.eta, phi=seed.phi, vector = l, seed=seed, area=jet_area)
+    return Jet(eta=seed.eta, phi=seed.phi, vector = l, seed=seed, area=jet_area, towers_around=towers_around[:4])
 
   def __towers_around(self, seed, radius=1.0):
     return [tower for tower in self.towers if np.sqrt((tower.phi - seed.phi)**2. + (tower.eta - seed.eta)**2.) <= radius and tower != seed]
