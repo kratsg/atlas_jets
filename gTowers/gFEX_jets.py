@@ -329,6 +329,7 @@ class Jet:
     # setting up jet details
     self.radius = np.float(radius)
     self.towers_around = towers_around
+    self.seed   = seed
 
   def vector(self, Pt = None, eta = None, phi = None, m = None):
     Pt = Pt or self.Pt
