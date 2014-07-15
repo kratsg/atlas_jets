@@ -410,7 +410,13 @@ class TowerEvent:
     return Jet(eta=seed.eta, phi=seed.phi, vector = l, seed=seed, area=jet_area, towers_around=towers_around[:4])
 
   def __towers_around(self, seed, radius=1.0):
-    return [tower for tower in self.towers if np.sqrt((tower.phi - seed.phi)**2. + (tower.eta - seed.eta)**2.) <= radius and tower != seed]
+    def distance_between(a,b):
+      #a = (phi, eta); b = (phi, eta)
+      delta = np.abs(a-b)
+      delta = np.array( [2*np.pi - delta[0] if delta[0] > np.pi else delta[0], delta[1]] ) #deal with periodicity in phi
+      return np.sqrt((delta**2.).sum(axis=-1))
+
+    return [tower for tower in self.towers if distance_between( np.array([tower.phi, tower.eta]), np.array([seed.phi, seed.eta]) ) <= radius and tower != seed]
 
   def __iter__(self):
     # initialize to start of list
