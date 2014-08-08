@@ -9,7 +9,6 @@ except:
   matplotlib.use('Agg')
   import matplotlib.pyplot as pl
 
-
 def erf(x):
   '''returns the error function evaluated at x'''
   # does not necessarily need SciPy working, but less accurate without
@@ -235,7 +234,7 @@ class Jet:
     return vector
 
   def rapidity(self):
-    return np.log( ((self.m**2. + self.Pt**2. * np.cosh(self.eta)**2.)**0.5 + self.Pt * np.sinh(self.eta) )/(self.m**2. + self.Pt**2.)**0.5)
+    return vector.Rapidity()
 
   def __str__(self):
     return "Offline Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)\n\tnum subjets: %d\n\ttau:\n\t\t%0.2f\n\t\t%0.2f\n\t\t%0.2f\n\tsplit:\n\t\t%0.2f\n\t\t%0.2f\n\t\t%0.2f" % (self.phi, self.eta, self.E, self.Pt, self.m, self.nsj, self.tau[0], self.tau[1], self.tau[2], self.split[0], self.split[1], self.split[2])
