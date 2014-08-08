@@ -1,30 +1,22 @@
 ''' Class definitions for dealing with ATLAS jets'''
-
 from ROOT import TLorentzVector
-
-#root_numpy is needed to read the rootfile
 import root_numpy as rnp
-
-# numpy and matplotlib (mpl) are used for computing and plotting 
 import numpy as np
+try:
+  import matplotlib.pyplot as pl
+except:
+  import matplotlib
+  matplotlib.use('Agg')
+  import matplotlib.pyplot as pl
 
-import matplotlib
-matplotlib.use('Agg')
-
-import matplotlib.pyplot as pl
 
 def erf(x):
   '''returns the error function evaluated at x'''
   # does not necessarily need SciPy working, but less accurate without
   try:
     import scipy.special
-    erf_loaded = True
-  except ImportError:
-    erf_loaded = False
-  # use SciPy if installed
-  if erf_loaded:
     return scipy.special.erf(x)
-  else:
+  except ImportError:
     # save the sign of x
     sign = 1 if x >= 0 else -1
     x = np.fabs(x)

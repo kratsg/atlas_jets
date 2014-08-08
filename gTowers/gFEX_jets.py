@@ -1,19 +1,15 @@
 ''' Class definitions for dealing with ATLAS jets using towers'''
-
-#import TLorentzVector to do a vector-sum
 from ROOT import TLorentzVector
-
-#root_numpy is needed to read the rootfile
 import root_numpy as rnp
-
-# numpy and matplotlib (mpl) are used for computing and plotting 
 import numpy as np
+try:
+  import matplotlib.pyplot as pl
+except:
+  import matplotlib
+  matplotlib.use('Agg')
+  import matplotlib.pyplot as pl
+
 np.seterr(divide='ignore', invalid='ignore') #numpy complains on line 271 about Tower::rho calculation
-
-import matplotlib
-matplotlib.use('Agg')
-
-import matplotlib.pyplot as pl
 
 def erf(x):
   '''returns the error function evaluated at x'''
