@@ -1,4 +1,3 @@
-
 from nose.tools import *
 import atlas_jets
 
