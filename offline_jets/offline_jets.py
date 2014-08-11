@@ -186,18 +186,8 @@ class Grid:
   def __str__(self):
     return "Grid object:\n\tPhi: %s\n\tEta: %s\n\tResolution: %0.2f" % (self.domain[0], self.domain[1], self.cell_resolution)
     
-class Jet:
-  def __init__(self,\
-               E              = 0.0,\
-               Pt             = 0.0,\
-               m              = 0.0,\
-               eta            = 0.0,\
-               phi            = 0.0,\
-               radius         = 1.0,\
-               nsj            = 0,\
-               tau            = [],\
-               split          = [],\
-               subjetsPt      = []):
+class Jet(TLorentzVector, object):
+  def __init__(self, *arg, **kwargs):
     '''Defines a jet'''
     """
       energy             : jet energy, E
@@ -210,34 +200,86 @@ class Jet:
         -- theta is angle between particle momentum and the beam axis
         -- see more: http://en.wikipedia.org/wiki/Pseudorapidity
       radius             : radius of jet (eta-phi coordinates)
+
+      initialize it by Jet(TLorentzVector) or Jet({'Pt': #, 'm': #, 'eta': #, 'phi': #, ...})
     """
-    self.E              = np.float(E)
-    self.Pt             = np.float(Pt)
-    self.m              = np.float(m)
-    self.phi            = np.float(phi)
-    self.eta            = np.float(eta)
-    self.coord          = (self.phi, self.eta)
-    self.radius         = np.float(radius)
-    self.nsj            = np.int(nsj)
-    self.tau            = np.array(tau)
-    self.split          = np.array(split)
-    self.subjetsPt      = np.array(subjetsPt)
 
-  def vector(self, Pt = None, eta = None, phi = None, m = None):
-    Pt = Pt or self.Pt
-    eta = eta or self.eta
-    phi = phi or self.phi
-    m = m or self.m
-    # generate a TLorentzVector to handle additions
-    vector = TLorentzVector()
-    vector.SetPtEtaPhiM(self.Pt, self.eta, self.phi, self.m)
-    return vector
+    copyVector = bool(len(arg) == 1)
+    newVector  = bool(len(kwargs) >= 4)
 
+    # require that exactly one of the sets of arguments are valid length
+    if not(copyVector ^ newVector):
+      raise ValueError('invalid number of arguments supplied')
+
+    if copyVector:
+      if isinstance(arg[0], TLorentzVector):
+        TLorentzVector.__init__(self, arg[0])
+      else:
+        raise TypeError('expected a TLorentzVector')
+    else:
+      TLorentzVector.__init__(self)
+      validKeys = ('pt','eta','phi','m')
+      kwargs = dict((k.lower(), v) for k,v in kwargs.iteritems())
+      if all(k in kwargs for k in validKeys):
+        self.SetPtEtaPhiM(*(kwargs[k] for k in validKeys))
+      else:
+        raise ValueError('Missing specific keys to make new vector, {}'.format(validKeys))
+
+    self._radius    = np.float(kwargs.get('radius', 1.0))
+
+    self._nsj       = np.int(  kwargs.get('nsj', 0))
+    self._tau       = np.array(kwargs.get('tau', []))
+    self._split     = np.array(kwargs.get('split', []))
+    self._subjetsPt = np.array(kwargs.get('subjetsPt', []))
+
+  @property
+  def coord(self):
+    return (self.phi, self.eta)
+  @property
+  def pt(self):
+    return self.Pt()
+  @property
+  def eta(self):
+    return self.Eta()
+  @property
+  def phi(self):
+    return self.Phi()
+  @property
+  def m(self):
+    return self.M()
+  @property
   def rapidity(self):
-    return vector.Rapidity()
+    return self.Rapidity()
+  #these are extra arguments passed in
+  @property
+  def r(self):
+    return self._radius
+  @property
+  def nsj(self):
+    return self._subjetsPt.size
+  @property
+  def tau(self):
+    return self._tau
+  @property
+  def split(self):
+    return self._split
+  @property
+  def subjetsPt(self):
+    return self._subjetsPt
 
   def __str__(self):
-    return "Offline Jet object:\n\t(phi,eta): (%0.4f, %0.4f)\n\tE: %0.2f (GeV)\n\tPt: %0.2f (GeV)\n\tm: %0.2f (GeV)\n\tnum subjets: %d\n\ttau:\n\t\t%0.2f\n\t\t%0.2f\n\t\t%0.2f\n\tsplit:\n\t\t%0.2f\n\t\t%0.2f\n\t\t%0.2f" % (self.phi, self.eta, self.E, self.Pt, self.m, self.nsj, self.tau[0], self.tau[1], self.tau[2], self.split[0], self.split[1], self.split[2])
+    if not hasattr(self,'_str'):
+      self._str = ["oJet object"]
+      self._str.append( "\t(phi,eta): ({:0.4f}, {:0.4f})".format(self.phi, self.eta) )
+      self._str.append( "\tPt: {:0.2f} GeV".format(self.pt) )
+      self._str.append( "\tm:  {:0.2f} GeV".format(self.m) )
+      if self.tau:
+        self._str.append( "\ttau: {}".format(map(lambda x: round(x,2), self.tau)) )
+      if self.split:
+        self._str.append( "\tsplit: {}".format(map(lambda x: round(x,2), self.split)) )
+      if self.subjetsPt:
+        self._str.append( "\tsubjetsPt: {}".format(map(lambda x: round(x,2), self.subjetsPt)) )
+    return "\n".join(self._str)
 
 class Event:
   # ToDo: rewrite Event[] to be a dictionary so we don't rely on ordering
@@ -248,15 +290,14 @@ class Event:
     subjetsPt = event[-1]/1000.
     for jetE, jetPt, jetM, jetEta, jetPhi, nsj, tau1, tau2, tau3, split12, split23, split34, subjets_index in zip(*jetData):
       # don't forget to scale from [MeV] -> [GeV]
-      self.jets.append(Jet(E=jetE/1000.,\
-                           Pt=jetPt/1000.,\
-                           m=jetM/1000.,\
-                           eta=jetEta,\
-                           phi=jetPhi,\
-                           nsj=nsj,\
-                           tau=np.array([tau1,tau2,tau3]),\
-                           split=np.array([split12,split23,split34]),\
-                           subjetsPt=subjetsPt[subjets_index]))
+      self.jets.append(Jet({'Pt': jetPt/1000.,\
+                            'm':  jetM/1000.,\
+                            'eta':jetEta,\
+                            'phi':jetPhi,\
+                            'nsj':nsj,\
+                            'tau':np.array([tau1,tau2,tau3]),\
+                            'split':np.array([split12,split23,split34]),\
+                            'subjetsPt':subjetsPt[subjets_index]}))
     self.jets.sort(key=lambda jet: jet.Pt, reverse=True)
 
   def __iter__(self):
@@ -272,7 +313,12 @@ class Event:
     return self.jets[self.iter_index]
 
   def __getitem__(self, index):
-    return self.jets[index]
+    if isinstance( index, ( int, long ) ):
+      return self.jets[index]
+    else if index in self.jets[0]:
+      return np.array([jet[index] for jet in self.jets])
+    else:
+      raise ValueError('Unclear what index is: {}, {}'.format(index, index.__class__))
 
   def __str__(self):
-    return "Event object with %d Jet objects" % len(self.jets)
+    return "Event object with {:d} Jet objects".format(len(self.jets))
