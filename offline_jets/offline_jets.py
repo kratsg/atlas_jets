@@ -227,9 +227,8 @@ class Jet(TLorentzVector, object):
 
     self._radius    = np.float(kwargs.get('radius', 1.0))
 
-    self._nsj       = np.int(  kwargs.get('nsj', 0))
-    self._tau       = np.array(kwargs.get('tau', []))
-    self._split     = np.array(kwargs.get('split', []))
+    self._tau       = np.array(kwargs.get('tau', [None,None,None]))
+    self._split     = np.array(kwargs.get('split', [None,None,None]))
     self._subjetsPt = np.array(kwargs.get('subjetsPt', []))
 
   @property
@@ -266,6 +265,23 @@ class Jet(TLorentzVector, object):
   @property
   def subjetsPt(self):
     return self._subjetsPt
+  # serialize by returning a recarray
+  @property
+  def as_rec(self):
+    # want to extend recarrays?
+    #   np.array(b.as_rec.tolist() + c.tolist(), dtype=(b.as_rec.dtype.descr + c.dtype.descr) )
+    # or if there are lists...
+    #   np.array( [b.as_rec.tolist()[0] + c.tolist()[0] ], dtype=(b.as_rec.dtype.descr + c.dtype.descr) )
+    datatype = ([('oJet.pt','float32'),\
+                  ('oJet.eta','float32'),\
+                  ('oJet.phi', 'float32'),\
+                  ('oJet.m','float32'),\
+                  ('oJet.rapidity','float32'),\
+                  ('oJet.nsj','int32'),\
+                  ('oJet.tau','3float32'),\
+                  ('oJet.split','3float32'),\
+                  ('oJet.subjetsPt', 'object')])
+    return np.array([(self.pt, self.eta, self.phi, self.m, self.rapidity, self.nsj, self.tau, self.split, self.subjetsPt)], dtype=datatype )
 
   def __str__(self):
     if not hasattr(self,'_str'):
@@ -273,9 +289,9 @@ class Jet(TLorentzVector, object):
       self._str.append( "\t(phi,eta): ({:0.4f}, {:0.4f})".format(self.phi, self.eta) )
       self._str.append( "\tPt: {:0.2f} GeV".format(self.pt) )
       self._str.append( "\tm:  {:0.2f} GeV".format(self.m) )
-      if self.tau:
+      if np.any(self.tau):
         self._str.append( "\ttau: {}".format(map(lambda x: round(x,2), self.tau)) )
-      if self.split:
+      if np.any(self.split):
         self._str.append( "\tsplit: {}".format(map(lambda x: round(x,2), self.split)) )
       if self.subjetsPt:
         self._str.append( "\tsubjetsPt: {}".format(map(lambda x: round(x,2), self.subjetsPt)) )
@@ -315,7 +331,7 @@ class Event:
   def __getitem__(self, index):
     if isinstance( index, ( int, long ) ):
       return self.jets[index]
-    else if index in self.jets[0]:
+    elif index in self.jets[0]:
       return np.array([jet[index] for jet in self.jets])
     else:
       raise ValueError('Unclear what index is: {}, {}'.format(index, index.__class__))

@@ -228,17 +228,24 @@ class Grid:
 
 class SeedFilter:
   def __init__(self, ETthresh = 0., numSeeds = 20.):
-    self.ETthresh = ETthresh
-    self.numSeeds = int(numSeeds)
+    self._ETthresh = ETthresh
+    self._numSeeds = int(numSeeds)
 
-  def filter(self, seeds):
+  @property
+  def ETthresh(self):
+    return self._ETthresh
+  @property
+  def numSeeds(self):
+    return self._numSeeds
+
+  def _filter(self, seeds):
     return [seed for seed in seeds if seed.Et > self.ETthresh][:self.numSeeds]
 
   def __call__(self, seeds):
-    return self.filter(seeds)
+    return self._filter(seeds)
 
   def __str__(self):
-    return "SeedFilter object returning at most %d seeds > %0.4f GeV" % (self.numSeeds, self.ETthresh)
+    return "SeedFilter object\n\t- at most {:d} seeds with Et > {:0.4f} GeV".format(self.numSeeds, self.ETthresh)
 
 class Tower:
   def __init__(self,\
