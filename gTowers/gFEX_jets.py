@@ -35,11 +35,13 @@ class Tower(TLorentzVector, object):
     """
       initialize it by passing in kwargs that contain all information
     """
-    newVector  = bool(len(kwargs) == 4)
+    newVector  = bool(len(kwargs) == 6)
 
     # require that exactly one of the sets of arguments are valid length
     if not newVector:
       raise ValueError('invalid number of keyword arguments supplied')
+
+    TLorentzVector.__init__(self)
 
     validKeys = ('et','etamin','etamax','phimin','phimax','num_cells')
     kwargs = dict((k.lower(), v) for k,v in kwargs.iteritems())
@@ -52,87 +54,87 @@ class Tower(TLorentzVector, object):
         0.0)
     else:
       raise ValueError('Missing specific keys to make new vector, {}'.format(validKeys))
-      self._etamax = kwargs['etamax']
-      self._etamin = kwargs['etamin']
-      self._phimax = kwargs['phimax']
-      self._phimin = kwargs['phimin']
-      self._num_cells = kwargs['num_cells']
+    self._etamax = kwargs['etamax']
+    self._etamin = kwargs['etamin']
+    self._phimax = kwargs['phimax']
+    self._phimin = kwargs['phimin']
+    self._num_cells = np.int(kwargs['num_cells'])
 
-    @property
-    def et(self):
-      return self.Et()
-    @property
-    def eta(self):
-      return self.Eta()
-    @property
-    def phi(self):
-      return self.Phi()
-    @property
-    def m(self):
-      return self.M()
-    @property
-    def num_cells(self):
-      return self._num_cells
-    @property
-    def rapidity(self):
-      return self.Rapidity()
-    @property
-    def area(self):
-      return np.abs((self.etamax - self.etamin) * (self.phimax - self.phimin))
-    @property
-    def rho(self):
-      return self.et / self.area
-    @property
-    def phimin(self):
-      return self._phimin
-    @property
-    def phimax(self):
-      return self._phimax
-    @property
-    def etamin(self):
-      return self._etamin
-    @property
-    def etamax(self):
-      return self._etamax
-    @property
-    def region(self):
-      if -1.6 <= self.eta < 0.0:
-        return 1
-      elif 0.0 <= self.eta < 1.6:
-        return 2
-      elif -4.9 <= self.eta < 1.6:
-        return 3
-      elif 1.6 <= self.eta < 4.9:
-        return 4
+  @property
+  def et(self):
+    return self.Et()
+  @property
+  def eta(self):
+    return self.Eta()
+  @property
+  def phi(self):
+    return self.Phi()
+  @property
+  def m(self):
+    return self.M()
+  @property
+  def num_cells(self):
+    return self._num_cells
+  @property
+  def rapidity(self):
+    return self.Rapidity()
+  @property
+  def area(self):
+    return np.abs((self.etamax - self.etamin) * (self.phimax - self.phimin))
+  @property
+  def rho(self):
+    return self.et / self.area
+  @property
+  def phimin(self):
+    return self._phimin
+  @property
+  def phimax(self):
+    return self._phimax
+  @property
+  def etamin(self):
+    return self._etamin
+  @property
+  def etamax(self):
+    return self._etamax
+  @property
+  def region(self):
+    if -1.6 <= self.eta < 0.0:
+      return 1
+    elif 0.0 <= self.eta < 1.6:
+      return 2
+    elif -4.9 <= self.eta < 1.6:
+      return 3
+    elif 1.6 <= self.eta < 4.9:
+      return 4
 
-    # serialize by returning a recarray
-    @property
-    def as_rec(self):
-      # want to extend recarrays?
-      #   np.array(b.as_rec.tolist() + c.tolist(), dtype=(b.as_rec.dtype.descr + c.dtype.descr) )
-      # or if there are lists...
-      #   np.array( [b.as_rec.tolist()[0] + c.tolist()[0] ], dtype=(b.as_rec.dtype.descr + c.dtype.descr) )
-      datatype = ([('tower.et','float32'),\
-                  ('tower.eta','float32'),\
-                  ('tower.phi', 'float32'),\
-                  ('tower.m','float32'),\
-                  ('tower.num_cells','int32'),\
-                  ('tower.rapidity','float32'),\
-                  ('tower.area','float32'),\
-                  ('tower.rho','float32')])
-      return np.array([(self.et, self.eta, self.phi, self.m, self.num_cells, self.rapidity, self.area, self.rho)], dtype=datatype )
+  # serialize by returning a recarray
+  @property
+  def as_rec(self):
+    # want to extend recarrays?
+    #   np.array(b.as_rec.tolist() + c.tolist(), dtype=(b.as_rec.dtype.descr + c.dtype.descr) )
+    # or if there are lists...
+    #   np.array( [b.as_rec.tolist()[0] + c.tolist()[0] ], dtype=(b.as_rec.dtype.descr + c.dtype.descr) )
+    datatype = ([('tower.et','float32'),\
+                ('tower.eta','float32'),\
+                ('tower.phi', 'float32'),\
+                ('tower.m','float32'),\
+                ('tower.num_cells','int32'),\
+                ('tower.rapidity','float32'),\
+                ('tower.area','float32'),\
+                ('tower.rho','float32')])
+    return np.array([(self.et, self.eta, self.phi, self.m, self.num_cells, self.rapidity, self.area, self.rho)], dtype=datatype )
 
-    def __str__(self):
-      if not hasattr(self,'_str'):
-        self._str = ["gTower object"]
-        self._str.append( "\t(phi,eta): ({:0.4f}, {:0.4f})".format(self.phi, self.eta) )
-        self._str.append( "\tEt: {:0.2f} GeV".format(self.et) )
-        self._str.append( "\tm:  {:0.2f} GeV".format(self.m) )
+  def __str__(self):
+    if not hasattr(self,'_str'):
+      self._str = ["gTower object"]
+      self._str.append( "\t(phi,eta): ({:0.4f}, {:0.4f})".format(self.phi, self.eta) )
+      self._str.append( "\tEt: {:0.2f} GeV".format(self.et) )
+      self._str.append( "\tm:  {:0.2f} GeV".format(self.m) )
 
-        self._str.append( "\trho: {:0.2f}".format(map(lambda x: round(x,2), self.rho)) )
-        self._str.append( "\tarea: {:0.2f}".format(map(lambda x: round(x,2), self.area)) )
-        self._str.append( "\tnum_cells: {:d}".format(self.num_cells) )
-      return "\n".join(self._str)
+      self._str.append( "\trho: {:0.2f}".format(self.rho) )
+      self._str.append( "\tarea: {:0.2f}".format(self.area) )
+      self._str.append( "\tnum_cells: {:d}".format(self.num_cells) )
+    return "\n".join(self._str)
 
 
 class Jet(TLorentzVector, object):
@@ -162,8 +164,8 @@ class Jet(TLorentzVector, object):
     else:
       raise TypeError('expected a TLorentzVector')
 
-    TLorentzVector.__init__(self)
-    validKeys = ('area','radius','towers_around','seed')
+    #TLorentzVector.__init__(self)
+    validKeys = ('area','radius','towers','seed')
     kwargs = dict((k.lower(), v) for k,v in kwargs.iteritems())
     if all(k in kwargs for k in validKeys):
       self._area    = np.float(kwargs['area'])
@@ -173,97 +175,102 @@ class Jet(TLorentzVector, object):
     else:
       raise ValueError('Missing specific keys to make tJet object, {}'.format(validKeys))
 
-    @property
-    def coord(self):
-      return (self.phi, self.eta)
-    @property
-    def et(self):
-      return self.Et()
-    @property
-    def eta(self):
-      return self.Eta()
-    @property
-    def phi(self):
-      return self.Phi()
-    @property
-    def m(self):
-      return self.M()
-    @property
-    def rapidity(self):
-      return self.Rapidity()
-    #these are extra arguments passed in
-    @property
-    def radius(self):
-      return self._radius
-    @property
-    def area(self):
-      return self._area
-    @property
-    def seed(self):
-      return self._seed
-    @property
-    def towers(self):
-      return self._towers
-    @property
-    def region(self):
-      if -1.6 <= self.eta < 0.0:
-        return 1
-      elif 0.0 <= self.eta < 1.6:
-        return 2
-      elif -4.9 <= self.eta < 1.6:
-        return 3
-      elif 1.6 <= self.eta < 4.9:
-        return 4
-    # serialize by returning a recarray
-    @property
-    def as_rec(self):
-      # want to extend recarrays?
-      #   np.array(b.as_rec.tolist() + c.tolist(), dtype=(b.as_rec.dtype.descr + c.dtype.descr) )
-      # or if there are lists...
-      #   np.array( [b.as_rec.tolist()[0] + c.tolist()[0] ], dtype=(b.as_rec.dtype.descr + c.dtype.descr) )
-      datatype = ([('tJet.et','float32'),\
-                    ('tJet.eta','float32'),\
-                    ('tJet.phi', 'float32'),\
-                    ('tJet.m','float32'),\
-                    ('tJet.rapidity','float32'),\
-                    ('tJet.radius','float32'),\
-                    ('tJet.area','float32'),\
-                    ('tJet.seed','object'),\
-                    ('tJet.towers', '3object')])
-      return np.array([(self.et, self.eta, self.phi, self.m, self.rapidity, self.radius, self.area, self.seed, self.towers)], dtype=datatype )
+  @property
+  def coord(self):
+    return (self.phi, self.eta)
+  @property
+  def et(self):
+    return self.Et()
+  @property
+  def eta(self):
+    return self.Eta()
+  @property
+  def phi(self):
+    return self.Phi()
+  @property
+  def m(self):
+    return self.M()
+  @property
+  def rapidity(self):
+    return self.Rapidity()
+  #these are extra arguments passed in
+  @property
+  def radius(self):
+    return self._radius
+  @property
+  def area(self):
+    return self._area
+  @property
+  def seed(self):
+    return self._seed
+  @property
+  def towers(self):
+    return self._towers
+  @property
+  def region(self):
+    if -1.6 <= self.eta < 0.0:
+      return 1
+    elif 0.0 <= self.eta < 1.6:
+      return 2
+    elif -4.9 <= self.eta < 1.6:
+      return 3
+    elif 1.6 <= self.eta < 4.9:
+      return 4
+  # serialize by returning a recarray
+  @property
+  def as_rec(self):
+    # want to extend recarrays?
+    #   np.array(b.as_rec.tolist() + c.tolist(), dtype=(b.as_rec.dtype.descr + c.dtype.descr) )
+    # or if there are lists...
+    #   np.array( [b.as_rec.tolist()[0] + c.tolist()[0] ], dtype=(b.as_rec.dtype.descr + c.dtype.descr) )
+    datatype = ([('tJet.et','float32'),\
+                  ('tJet.eta','float32'),\
+                  ('tJet.phi', 'float32'),\
+                  ('tJet.m','float32'),\
+                  ('tJet.rapidity','float32'),\
+                  ('tJet.radius','float32'),\
+                  ('tJet.area','float32'),\
+                  ('tJet.seed','object'),\
+                  ('tJet.towers', '3object')])
+    return np.array([(self.et, self.eta, self.phi, self.m, self.rapidity, self.radius, self.area, self.seed, self.towers)], dtype=datatype )
 
-    def __str__(self):
-      if not hasattr(self,'_str'):
-        self._str = ["gJet object"]
-        self._str.append( "\t(phi,eta): ({:0.4f}, {:0.4f})".format(self.phi, self.eta) )
-        self._str.append( "\tEt: {:0.2f} GeV".format(self.et) )
-        self._str.append( "\tm:  {:0.2f} GeV".format(self.m) )
+  def __str__(self):
+    if not hasattr(self,'_str'):
+      self._str = ["gJet object"]
+      self._str.append( "\t(phi,eta): ({:0.4f}, {:0.4f})".format(self.phi, self.eta) )
+      self._str.append( "\tEt: {:0.2f} GeV".format(self.et) )
+      self._str.append( "\tm:  {:0.2f} GeV".format(self.m) )
 
-        self._str.append( "\tradius: {:0.2f}".format(map(lambda x: round(x,2), self.radius)) )
-        self._str.append( "\tarea: {:0.2f}".format(map(lambda x: round(x,2), self.area)) )
-        self.__str.append( "======SEED======" )
-        self.__str.append( str(self.seed) )
-      return "\n".join(self._str)
+      self._str.append( "\tradius: {:0.2f}".format(self.radius) )
+      self._str.append( "\tarea: {:0.2f}".format(self.area) )
+      self._str.append( "======SEED======" )
+      self._str.append( str(self.seed) )
+    return "\n".join(self._str)
 
 class TowerEvent:
-  def __init__(self, event = [], seed_filter = SeedFilter(), noise_filter = 0.0, signal_thresh = 1.e5):
+  def __init__(self, event = [], seed_filter = SeedFilter()):
     self.towers = []
     self.seed_filter = seed_filter
     for gTowerEt, gTowerNCells, gTowerEtaMin, gTowerEtaMax, gTowerPhiMin, gTowerPhiMax in zip(*event):
       # noisy gTowers do not need to be included
-      if not(signal_thresh > gTowerEt/1000. > noise_filter):
-        continue
       self.towers.append(Tower(Et=gTowerEt/1000.,\
                                num_cells=gTowerNCells,\
                                etaMin=gTowerEtaMin,\
                                etaMax=gTowerEtaMax,\
                                phiMin=gTowerPhiMin,\
                                phiMax=gTowerPhiMax))
-    self.towers.sort(key=lambda tower: tower.et, reverse=True)
+      self.towers.sort(key=lambda tower: tower.et, reverse=True)
+
+  def towers_below(self, et):
+    return [tower for tower in self.towers if tower.et < et]
+
+  def towers_above(self, et):
+    return [tower for tower in self.towers if tower.et > et]
+
+  def towers_between(self, low, high):
+    return [tower for tower in self.towers if high > tower.et > low]
 
   def filter_towers(self):
-    if not self.seed_filter:
-      raise ValueError("You must set a filter with self.seed_filter(*SeedFilter).")
     return self.seed_filter(self.towers)
 
   def get_event(self, radius=1.0):
@@ -278,7 +285,7 @@ class TowerEvent:
 
   def __seed_to_jet(self, seed, radius=1.0):
     # note: each tower has m=0, so E = p, ET = Pt
-    l = seed.vector()
+    l = seed
     jet_area = seed.area
     towers_around = self.__towers_around(seed, radius=radius)
     for tower in towers_around:
@@ -286,9 +293,11 @@ class TowerEvent:
       #normalization = 2. * np.pi * radius**2. * erf( 0.92 * (2.**-0.5) )**2.
       #exponential = np.exp(-( (seed.phi - tower.phi)**2./(2. * (radius**2.)) + (seed.eta - tower.eta)**2./(2.*(radius**2.)) ))
       #towerTLorentzVector.SetPtEtaPhiM(tower.E/np.cosh(tower.eta) * exponential/normalization, tower.eta, tower.phi, 0.0)
-      l += tower.vector()
+
+      # don't do l += tower, fucking doesn't copy fucking fuck fucking
+      l = l + tower
       jet_area += tower.area
-    return Jet(l, area=jet_area, radius=radius, seed=seed, towers=towers[:3])
+    return Jet(l, area=jet_area, radius=radius, seed=seed, towers=towers_around[:3])
 
   def __towers_around(self, seed, radius=1.0):
     def distance_between(a,b):
