@@ -1,7 +1,7 @@
 ''' Class definitions for dealing with ATLAS jets'''
 from ROOT import TLorentzVector
-import root_numpy as rnp
 import numpy as np
+import root_numpy as rnp
 try:
   import matplotlib.pyplot as pl
 except:
@@ -128,7 +128,7 @@ class Event:
     # format comes in a list of jet data + subjet pt, identified by index
     jetData = event[:-1]
     subjetsPt = event[-1]/1000.
-    for jetE, jetPt, jetM, jetEta, jetPhi, nsj, tau1, tau2, tau3, split12, split23, split34, subjets_index in zip(*jetData):
+    for jetPt, jetM, jetEta, jetPhi, nsj, tau1, tau2, tau3, split12, split23, split34, subjets_index in zip(*jetData):
       # don't forget to scale from [MeV] -> [GeV]
       self.jets.append(Jet({'Pt': jetPt/1000.,\
                             'm':  jetM/1000.,\
