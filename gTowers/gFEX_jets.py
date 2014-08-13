@@ -12,25 +12,22 @@ except:
 #np.seterr(divide='ignore', invalid='ignore') #numpy complains on line 271 about Tower::rho calculation
 
 class SeedFilter:
-  def __init__(self, ETthresh = 0., numSeeds = 20.):
-    self._ETthresh = ETthresh
-    self._numSeeds = int(numSeeds)
+  def __init__(self, et = 0., n = 20.):
+    self._et = np.float(ETthresh)
+    self._n  = np.int(numSeeds)
 
   @property
-  def ETthresh(self):
-    return self._ETthresh
+  def et(self):
+    return self._et
   @property
-  def numSeeds(self):
-    return self._numSeeds
-
-  def _filter(self, seeds):
-    return [seed for seed in seeds if seed.Et > self.ETthresh][:self.numSeeds]
+  def n(self):
+    return self._n
 
   def __call__(self, seeds):
-    return self._filter(seeds)
+    return [seed for seed in seeds if seed.et > self.et][:self.n]
 
   def __str__(self):
-    return "SeedFilter object\n\t- at most {:d} seeds with Et > {:0.4f} GeV".format(self.numSeeds, self.ETthresh)
+    return "SeedFilter object\n\tat most {:d} seeds with Et > {:0.4f} GeV".format(self.n, self.et)
 
 class Tower(TLorentzVector, object):
   def __init__(self, *arg, **kwargs):
@@ -263,9 +260,6 @@ class TowerEvent:
                                'phiMin': gTowerPhiMin,\
                                'phiMax': gTowerPhiMax}))
     self.towers.sort(key=lambda tower: tower.et, reverse=True)
-
-  def set_seed_filter(self, seed_filter):
-    self.seed_filter = seed_filter
 
   def filter_towers(self):
     if not self.seed_filter:
