@@ -13,8 +13,8 @@ except:
 
 class SeedFilter:
   def __init__(self, et = 0., n = 20.):
-    self._et = np.float(ETthresh)
-    self._n  = np.int(numSeeds)
+    self._et = np.float(et)
+    self._n  = np.int(n)
 
   @property
   def et(self):
@@ -102,7 +102,7 @@ class Tower(TLorentzVector, object):
         return 2
       elif -4.9 <= self.eta < 1.6:
         return 3
-      elif: 1.6 <= self.eta < 4.9:
+      elif 1.6 <= self.eta < 4.9:
         return 4
 
     # serialize by returning a recarray
@@ -112,14 +112,14 @@ class Tower(TLorentzVector, object):
       #   np.array(b.as_rec.tolist() + c.tolist(), dtype=(b.as_rec.dtype.descr + c.dtype.descr) )
       # or if there are lists...
       #   np.array( [b.as_rec.tolist()[0] + c.tolist()[0] ], dtype=(b.as_rec.dtype.descr + c.dtype.descr) )
-        datatype = ([('tower.et','float32'),\
-                    ('tower.eta','float32'),\
-                    ('tower.phi', 'float32'),\
-                    ('tower.m','float32'),\
-                    ('tower.num_cells','int32'),\
-                    ('tower.rapidity','float32'),\
-                    ('tower.area','float32'),\
-                    ('tower.rho','float32')])
+      datatype = ([('tower.et','float32'),\
+                  ('tower.eta','float32'),\
+                  ('tower.phi', 'float32'),\
+                  ('tower.m','float32'),\
+                  ('tower.num_cells','int32'),\
+                  ('tower.rapidity','float32'),\
+                  ('tower.area','float32'),\
+                  ('tower.rho','float32')])
       return np.array([(self.et, self.eta, self.phi, self.m, self.num_cells, self.rapidity, self.area, self.rho)], dtype=datatype )
 
     def __str__(self):
@@ -212,7 +212,7 @@ class Jet(TLorentzVector, object):
         return 2
       elif -4.9 <= self.eta < 1.6:
         return 3
-      elif: 1.6 <= self.eta < 4.9:
+      elif 1.6 <= self.eta < 4.9:
         return 4
     # serialize by returning a recarray
     @property
@@ -253,12 +253,12 @@ class TowerEvent:
       # noisy gTowers do not need to be included
       if not(signal_thresh > gTowerEt/1000. > noise_filter):
         continue
-      self.towers.append(Tower({'Et': gTowerEt/1000.,\
-                               'num_cells': gTowerNCells,\
-                               'etaMin': gTowerEtaMin,\
-                               'etaMax': gTowerEtaMax,\
-                               'phiMin': gTowerPhiMin,\
-                               'phiMax': gTowerPhiMax}))
+      self.towers.append(Tower(Et=gTowerEt/1000.,\
+                               num_cells=gTowerNCells,\
+                               etaMin=gTowerEtaMin,\
+                               etaMax=gTowerEtaMax,\
+                               phiMin=gTowerPhiMin,\
+                               phiMax=gTowerPhiMax))
     self.towers.sort(key=lambda tower: tower.et, reverse=True)
 
   def filter_towers(self):

@@ -130,14 +130,14 @@ class Event:
     subjetsPt = event[-1]/1000.
     for jetPt, jetM, jetEta, jetPhi, nsj, tau1, tau2, tau3, split12, split23, split34, subjets_index in zip(*jetData):
       # don't forget to scale from [MeV] -> [GeV]
-      self.jets.append(Jet({'Pt': jetPt/1000.,\
-                            'm':  jetM/1000.,\
-                            'eta':jetEta,\
-                            'phi':jetPhi,\
-                            'nsj':nsj,\
-                            'tau':np.array([tau1,tau2,tau3]),\
-                            'split':np.array([split12,split23,split34]),\
-                            'subjetsPt':subjetsPt[subjets_index]}))
+      self.jets.append(Jet(Pt=jetPt/1000.,\
+                            m=jetM/1000.,\
+                            eta=jetEta,\
+                            phi=jetPhi,\
+                            nsj=nsj,\
+                            tau=np.array([tau1,tau2,tau3]),\
+                            split=np.array([split12,split23,split34]),\
+                            subjetsPt=subjetsPt[subjets_index]))
     self.jets.sort(key=lambda jet: jet.pt, reverse=True)
 
   def __iter__(self):
