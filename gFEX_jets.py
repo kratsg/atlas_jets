@@ -23,8 +23,8 @@ class SeedFilter:
   def n(self):
     return self._n
 
-  def __call__(self, seeds):
-    return [seed for seed in seeds if seed.et > self.et][:self.n]
+  def __call__(self, towers):
+    return [tower for tower in towers if tower.et > self.et][:self.n]
 
   def __str__(self):
     return "SeedFilter object\n\tat most {:d} seeds with Et > {:0.4f} GeV".format(self.n, self.et)
@@ -270,24 +270,28 @@ class TowerEvent:
   def towers_between(self, low, high):
     return [tower for tower in self.towers if high > tower.et > low]
 
-  def filter_towers(self):
-    return self.seed_filter(self.towers)
+  def filter_towers(self, towers=None):
+    towers = towers or self.towers
+    return self.seed_filter(towers)
 
-  def get_event(self, radius=1.0):
-    self.__seeds_to_jet(radius=radius)
+  def get_event(self, radius=1.0, towers=None):
+    towers = towers or self.towers
+    self.__seeds_to_jet(radius=radius, towers=towers)
     return self.event
 
-  def __seeds_to_jet(self, radius=1.0):
+  def __seeds_to_jet(self, radius=1.0, towers=None):
+    towers = towers or self.towers
     jets = []
-    for seed in self.filter_towers():
-      jets.append(self.__seed_to_jet(seed, radius=radius))
+    for seed in self.filter_towers(towers=towers):
+      jets.append(self.__seed_to_jet(seed, radius=radius, towers=towers))
     self.event = Event(jets=jets)
 
-  def __seed_to_jet(self, seed, radius=1.0):
+  def __seed_to_jet(self, seed, radius=1.0, towers=None):
+    towers = towers or self.towers
     # note: each tower has m=0, so E = p, ET = Pt
     l = seed
     jet_area = seed.area
-    towers_around = self.__towers_around(seed, radius=radius)
+    towers_around = self.__towers_around(seed, radius=radius, towers=towers)
     for tower in towers_around:
       #radius = 1.0
       #normalization = 2. * np.pi * radius**2. * erf( 0.92 * (2.**-0.5) )**2.
@@ -299,14 +303,15 @@ class TowerEvent:
       jet_area += tower.area
     return Jet(l, area=jet_area, radius=radius, seed=seed, towers=towers_around[:3])
 
-  def __towers_around(self, seed, radius=1.0):
+  def __towers_around(self, seed, radius=1.0, towers=None):
+    towers = towers or self.towers
     def distance_between(a,b):
       #a = (phi, eta); b = (phi, eta)
       delta = np.abs(a-b)
       delta = np.array( [2*np.pi - delta[0] if delta[0] > np.pi else delta[0], delta[1]] ) #deal with periodicity in phi
       return np.sqrt((delta**2.).sum(axis=-1))
 
-    return [tower for tower in self.towers if distance_between( np.array([tower.phi, tower.eta]), np.array([seed.phi, seed.eta]) ) <= radius and tower != seed]
+    return [tower for tower in towers if distance_between( np.array([tower.phi, tower.eta]), np.array([seed.phi, seed.eta]) ) <= radius and tower != seed]
 
   def __iter__(self):
     # initialize to start of list
