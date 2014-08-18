@@ -102,7 +102,7 @@ class Tower(TLorentzVector, object):
       return 1
     elif 0.0 <= self.eta < 1.6:
       return 2
-    elif -4.9 <= self.eta < 1.6:
+    elif -4.9 <= self.eta < -1.6:
       return 3
     elif 1.6 <= self.eta < 4.9:
       return 4
@@ -212,7 +212,7 @@ class Jet(TLorentzVector, object):
       return 1
     elif 0.0 <= self.eta < 1.6:
       return 2
-    elif -4.9 <= self.eta < 1.6:
+    elif -4.9 <= self.eta < -1.6:
       return 3
     elif 1.6 <= self.eta < 4.9:
       return 4
