@@ -48,11 +48,13 @@ class Jet(TLorentzVector, object):
       else:
         raise ValueError('Missing specific keys to make new vector, {}'.format(validKeys))
 
+    # remember that the names are lowercased to make it consistent
     self._radius    = np.float(kwargs.get('radius', 1.0))
-
+    self._nsj       = np.int(kwargs.get('nsj', 0))
     self._tau       = np.array(kwargs.get('tau', [None,None,None]))
     self._split     = np.array(kwargs.get('split', [None,None,None]))
-    self._subjetsPt = np.array(kwargs.get('subjetsPt', []))
+    self._subjetsPt = np.array(kwargs.get('subjetspt', [None]))
+
 
   @property
   def coord(self):
@@ -78,7 +80,7 @@ class Jet(TLorentzVector, object):
     return self._radius
   @property
   def nsj(self):
-    return self._subjetsPt.size
+    return self._nsj
   @property
   def tau(self):
     return self._tau
