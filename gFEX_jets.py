@@ -65,10 +65,10 @@ class Tower(TLorentzVector, object):
     return self.Et()
   @property
   def eta(self):
-    return self.Eta()
+    return (self.etamax + self.etamin)/2.
   @property
   def phi(self):
-    return self.Phi()
+    return (self.phimax + self.phimin)/2.
   @property
   def m(self):
     return self.M()
@@ -148,7 +148,7 @@ class Jet(TLorentzVector, object):
       towers_around      : contains the top 3 gTowers
       seed               : contains the seed used for this jet
 
-      initialize it by passing in a TLorentzVector() object plus kwargs that 
+      initialize it by passing in a TLorentzVector() object plus kwargs that
         contain area, radius, and towers_around
     """
 
