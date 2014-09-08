@@ -191,11 +191,11 @@ class Jet(TLorentzVector, object):
 
   @property
   def eta(self):
-    return self.seed.eta
+    return self._seed.eta
 
   @property
   def phi(self):
-    return self.seed.phi
+    return self._seed.phi
 
   @property
   def m(self):
