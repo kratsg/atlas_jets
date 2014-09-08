@@ -222,7 +222,8 @@ class Jet(TLorentzVector, object):
   def towers(self):
     # return 3 towers, some may have less -- in which case, need to fill with
     # more
-    return self._towers + [Jet(TLorentzVector(), radius=1.0, towers=[None, None, None], seed=TLorentzVector(), area=0.0)] * (3 - len(self._towers))
+    null_gTower = Tower(et=0.0, etamin=0.0, etamax=0.0, phimin=0.0, phimax=0.0, num_cells=0)
+    return np.append(self._towers, [null_gTower] * (3 - len(self._towers)))
 
   @property
   def region(self):
