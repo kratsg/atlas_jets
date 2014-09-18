@@ -26,34 +26,37 @@ class SeedFilter:
 
 
 class Tower(TLorentzVector, object):
-  def __init__(self, *arg, **kwargs):
+  def __init__(self, *args, **kwargs):
     '''Defines a gTower'''
     """
       initialize it by passing in kwargs that contain all information
     """
-    newVector  = bool(len(kwargs) == 6)
-
-    # require that exactly one of the sets of arguments are valid length
-    if not newVector:
-      raise ValueError('invalid number of keyword arguments supplied')
-
-    TLorentzVector.__init__(self)
-
-    validKeys = ('et', 'etamin', 'etamax', 'phimin', 'phimax', 'num_cells')
-    kwargs = dict((k.lower(), v) for k, v in kwargs.iteritems())
-    if all(k in kwargs for k in validKeys):
-      # set the center of the tower to the geometric center
-      self.SetPtEtaPhiM(kwargs['et'],
-                        (kwargs['etamax'] + kwargs['etamin'])/2.0,
-                        (kwargs['phimax'] + kwargs['phimin'])/2.0,
-                        0.0)
+    if len(args) == 2 and isinstance(args[0], pow.__class__):
+      super(self.__class__, self).__init__(args[0](*args[1]))
     else:
-      raise ValueError('Missing specific keys to make new vector, {}'.format(validKeys))
-    self._etamax = kwargs['etamax']
-    self._etamin = kwargs['etamin']
-    self._phimax = kwargs['phimax']
-    self._phimin = kwargs['phimin']
-    self._num_cells = np.int(kwargs['num_cells'])
+      newVector  = bool(len(kwargs) == 6)
+
+      # require that exactly one of the sets of arguments are valid length
+      if not newVector:
+        raise ValueError('invalid number of keyword arguments supplied')
+
+      TLorentzVector.__init__(self)
+
+      validKeys = ('et', 'etamin', 'etamax', 'phimin', 'phimax', 'num_cells')
+      kwargs = dict((k.lower(), v) for k, v in kwargs.iteritems())
+      if all(k in kwargs for k in validKeys):
+        # set the center of the tower to the geometric center
+        self.SetPtEtaPhiM(kwargs['et'],
+                          (kwargs['etamax'] + kwargs['etamin'])/2.0,
+                          (kwargs['phimax'] + kwargs['phimin'])/2.0,
+                          0.0)
+      else:
+        raise ValueError('Missing specific keys to make new vector, {}'.format(validKeys))
+      self._etamax = kwargs['etamax']
+      self._etamin = kwargs['etamin']
+      self._phimax = kwargs['phimax']
+      self._phimin = kwargs['phimin']
+      self._num_cells = np.int(kwargs['num_cells'])
 
   @property
   def et(self):
@@ -142,9 +145,18 @@ class Tower(TLorentzVector, object):
       self._str.append("\tnum_cells: {:d}".format(self.num_cells))
     return "\n".join(self._str)
 
+  def __getstate__(self):
+    return self.__dict__
+
+  def __setstate__(self, state):
+    self.__dict__ = state
+
+  def __reduce__(self):
+    return (self.__class__, super(Tower, self).__reduce__(), self.__getstate__(), )
+
 
 class Jet(TLorentzVector, object):
-  def __init__(self, *arg, **kwargs):
+  def __init__(self, *args, **kwargs):
     '''Defines a trigger jet'''
     """
       vector             : a TLorentzVector() defined from ROOT that contains
@@ -157,29 +169,31 @@ class Jet(TLorentzVector, object):
       initialize it by passing in a TLorentzVector() object plus kwargs that
         contain area, radius, and towers_around
     """
-
-    copyVector = bool(len(arg) == 1)
-    newVector  = bool(len(kwargs) == 4)
-
-    # require that exactly one of the sets of arguments are valid length
-    if not(copyVector and newVector):
-      raise ValueError('invalid number of arguments supplied')
-
-    if isinstance(arg[0], TLorentzVector):
-      TLorentzVector.__init__(self, arg[0])
+    if len(args) == 2 and isinstance(args[0], pow.__class__):
+      super(self.__class__, self).__init__(args[0](*args[1]))
     else:
-      raise TypeError('expected a TLorentzVector')
+      copyVector = bool(len(args) == 1)
+      newVector  = bool(len(kwargs) == 4)
 
-    # TLorentzVector.__init__(self)
-    validKeys = ('area', 'radius', 'towers', 'seed')
-    kwargs = dict((k.lower(), v) for k, v in kwargs.iteritems())
-    if all(k in kwargs for k in validKeys):
-      self._area    = np.float(kwargs['area'])
-      self._radius  = np.float(kwargs['radius'])
-      self._towers  = np.array(kwargs['towers'])
-      self._seed    = kwargs['seed']
-    else:
-      raise ValueError('Missing specific keys to make tJet object, {}'.format(validKeys))
+      # require that exactly one of the sets of arguments are valid length
+      if not(copyVector and newVector):
+        raise ValueError('invalid number of arguments supplied')
+
+      if isinstance(args[0], TLorentzVector):
+        TLorentzVector.__init__(self, args[0])
+      else:
+        raise TypeError('expected a TLorentzVector')
+
+      # TLorentzVector.__init__(self)
+      validKeys = ('area', 'radius', 'towers', 'seed')
+      kwargs = dict((k.lower(), v) for k, v in kwargs.iteritems())
+      if all(k in kwargs for k in validKeys):
+        self._area    = np.float(kwargs['area'])
+        self._radius  = np.float(kwargs['radius'])
+        self._towers  = np.array(kwargs['towers'])
+        self._seed    = kwargs['seed']
+      else:
+        raise ValueError('Missing specific keys to make tJet object, {}'.format(validKeys))
 
   @property
   def coord(self):
@@ -265,6 +279,15 @@ class Jet(TLorentzVector, object):
       self._str.append("======SEED======")
       self._str.append(str(self.seed))
     return "\n".join(self._str)
+
+  def __getstate__(self):
+    return self.__dict__
+
+  def __setstate__(self, state):
+    self.__dict__ = state
+
+  def __reduce__(self):
+    return (self.__class__, super(self.__class__, self).__reduce__(), self.__getstate__(), )
 
 
 class TowerEvent:
